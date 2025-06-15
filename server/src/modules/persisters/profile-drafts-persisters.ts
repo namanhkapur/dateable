@@ -1,6 +1,7 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabaseProfileDrafts, { DatabaseProfileDraftsInitializer } from '../../types/database/DatabaseProfileDrafts';
+import DatabaseProfileDrafts, { DatabaseProfileDraftsInitializer, DatabaseProfileDraftsId } from '../../types/database/DatabaseProfileDrafts';
+import { DatabaseUsersId } from '../../types/database/DatabaseUsers';
 
 export interface ProfileDraftsModel extends DatabaseProfileDrafts {}
 
@@ -13,7 +14,7 @@ export class ProfileDraftsModel extends BaseModel {
  */
 const getProfileDraftById = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileDraftsId,
 ): Promise<DatabaseProfileDrafts | undefined> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
@@ -26,7 +27,7 @@ const getProfileDraftById = async (
  */
 const getProfileDraftsBySubjectUserId = async (
   context: Context,
-  subjectUserId: number,
+  subjectUserId: DatabaseUsersId,
 ): Promise<DatabaseProfileDrafts[]> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
@@ -39,7 +40,7 @@ const getProfileDraftsBySubjectUserId = async (
  */
 const getProfileDraftsByCreatedByUserId = async (
   context: Context,
-  createdByUserId: number,
+  createdByUserId: DatabaseUsersId,
 ): Promise<DatabaseProfileDrafts[]> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
@@ -52,7 +53,7 @@ const getProfileDraftsByCreatedByUserId = async (
  */
 const getFinalizedProfileDraftsBySubjectUserId = async (
   context: Context,
-  subjectUserId: number,
+  subjectUserId: DatabaseUsersId,
 ): Promise<DatabaseProfileDrafts[]> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
@@ -65,7 +66,7 @@ const getFinalizedProfileDraftsBySubjectUserId = async (
  */
 const getDraftProfileDraftsBySubjectUserId = async (
   context: Context,
-  subjectUserId: number,
+  subjectUserId: DatabaseUsersId,
 ): Promise<DatabaseProfileDrafts[]> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
@@ -92,7 +93,7 @@ const createProfileDraft = async (
  */
 const updateProfileDraft = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileDraftsId,
   updates: Partial<Pick<DatabaseProfileDrafts, 'isFinalized'>>,
 ): Promise<DatabaseProfileDrafts | undefined> => {
   return await context.databaseService
@@ -108,7 +109,7 @@ const updateProfileDraft = async (
  */
 const finalizeProfileDraft = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileDraftsId,
 ): Promise<DatabaseProfileDrafts | undefined> => {
   return await updateProfileDraft(context, id, { isFinalized: true });
 };
@@ -118,7 +119,7 @@ const finalizeProfileDraft = async (
  */
 const deleteProfileDraft = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileDraftsId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(ProfileDraftsModel)

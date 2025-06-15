@@ -1,6 +1,10 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabaseProfileElements, { DatabaseProfileElementsInitializer } from '../../types/database/DatabaseProfileElements';
+import DatabaseProfileElements, { DatabaseProfileElementsInitializer, DatabaseProfileElementsId } from '../../types/database/DatabaseProfileElements';
+import { batchQuery } from '../../database/model-helpers';
+import { DatabaseProfileDraftsId } from '../../types/database/DatabaseProfileDrafts';
+import { DatabaseAssetsId } from '../../types/database/DatabaseAssets';
+import { DatabasePromptsId } from '../../types/database/DatabasePrompts';
 
 export interface ProfileElementsModel extends DatabaseProfileElements {}
 
@@ -29,7 +33,7 @@ const upsertProfileElement = async (
  */
 const getProfileElementById = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileElementsId,
 ): Promise<DatabaseProfileElements | undefined> => {
   return await context.databaseService
     .query(ProfileElementsModel)
@@ -42,7 +46,7 @@ const getProfileElementById = async (
  */
 const getProfileElementsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<DatabaseProfileElements[]> => {
   return await context.databaseService
     .query(ProfileElementsModel)
@@ -55,7 +59,7 @@ const getProfileElementsByProfileDraftId = async (
  */
 const getProfileElementsByType = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
   type: string,
 ): Promise<DatabaseProfileElements[]> => {
   return await context.databaseService
@@ -69,7 +73,7 @@ const getProfileElementsByType = async (
  */
 const getProfileElementsByAssetId = async (
   context: Context,
-  assetId: number,
+  assetId: DatabaseAssetsId,
 ): Promise<DatabaseProfileElements[]> => {
   return await context.databaseService
     .query(ProfileElementsModel)
@@ -82,7 +86,7 @@ const getProfileElementsByAssetId = async (
  */
 const getProfileElementsByPromptId = async (
   context: Context,
-  promptId: number,
+  promptId: DatabasePromptsId,
 ): Promise<DatabaseProfileElements[]> => {
   return await context.databaseService
     .query(ProfileElementsModel)
@@ -95,7 +99,7 @@ const getProfileElementsByPromptId = async (
  */
 const updateProfileElement = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileElementsId,
   updates: Partial<Pick<DatabaseProfileElements, 'position' | 'type' | 'assetId' | 'promptId' | 'textResponse' | 'subResponses'>>,
 ): Promise<DatabaseProfileElements | undefined> => {
   return await context.databaseService
@@ -111,7 +115,7 @@ const updateProfileElement = async (
  */
 const updateProfileElementPosition = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileElementsId,
   position: number,
 ): Promise<DatabaseProfileElements | undefined> => {
   return await updateProfileElement(context, id, { position });
@@ -122,7 +126,7 @@ const updateProfileElementPosition = async (
  */
 const deleteProfileElement = async (
   context: Context,
-  id: number,
+  id: DatabaseProfileElementsId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(ProfileElementsModel)
@@ -136,7 +140,7 @@ const deleteProfileElement = async (
  */
 const deleteProfileElementsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<number> => {
   return await context.databaseService
     .query(ProfileElementsModel)
@@ -145,16 +149,52 @@ const deleteProfileElementsByProfileDraftId = async (
 };
 
 /**
- * Reorder profile elements for a profile draft.
+ * Reorder profile elements for a profile draft using batch upsert.
  */
 const reorderProfileElements = async (
   context: Context,
-  profileDraftId: number,
-  elementIdPositionPairs: Array<{ id: number; position: number }>,
+  profileDraftId: DatabaseProfileDraftsId,
+  elementIdPositionPairs: Array<{ id: DatabaseProfileElementsId; position: number }>,
 ): Promise<void> => {
-  for (const { id, position } of elementIdPositionPairs) {
-    await updateProfileElementPosition(context, id, position);
-  }
+  if (elementIdPositionPairs.length === 0) return;
+
+  // First, get the existing profile elements to preserve their data
+  const existingElements = await getProfileElementsByProfileDraftId(context, profileDraftId);
+  const existingElementsMap = new Map(existingElements.map(el => [el.id, el]));
+
+  // Create upsert records with updated positions
+  const upsertRecords: DatabaseProfileElementsInitializer[] = elementIdPositionPairs.map(({ id, position }) => {
+    const existingElement = existingElementsMap.get(id);
+    if (!existingElement) {
+      throw new Error(`Profile element with id ${id} not found in profile draft ${profileDraftId}`);
+    }
+    
+    return {
+      profileDraftId: existingElement.profileDraftId,
+      position,
+      type: existingElement.type,
+      assetId: existingElement.assetId,
+      promptId: existingElement.promptId,
+      textResponse: existingElement.textResponse,
+      subResponses: existingElement.subResponses,
+    };
+  });
+
+  await batchQuery(
+    context,
+    upsertRecords,
+    async (batch) => {
+      for (const record of batch) {
+        await context.databaseService
+          .query(ProfileElementsModel)
+          .insert(record)
+          .onConflict(['profile_draft_id', 'position'])
+          .merge();
+      }
+      return [];
+    },
+    50 // Smaller batch size for position updates
+  );
 };
 
 export const ProfileElementsPersister = {

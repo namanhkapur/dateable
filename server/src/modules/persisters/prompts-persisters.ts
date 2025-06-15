@@ -1,6 +1,6 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabasePrompts, { DatabasePromptsInitializer } from '../../types/database/DatabasePrompts';
+import DatabasePrompts, { DatabasePromptsInitializer, DatabasePromptsId } from '../../types/database/DatabasePrompts';
 
 export interface PromptsModel extends DatabasePrompts {}
 
@@ -29,7 +29,7 @@ const upsertPrompt = async (
  */
 const getPromptById = async (
   context: Context,
-  id: number,
+  id: DatabasePromptsId,
 ): Promise<DatabasePrompts | undefined> => {
   return await context.databaseService
     .query(PromptsModel)
@@ -93,7 +93,7 @@ const createPrompt = async (
  */
 const updatePrompt = async (
   context: Context,
-  id: number,
+  id: DatabasePromptsId,
   updates: Partial<Pick<DatabasePrompts, 'title' | 'type'>>,
 ): Promise<DatabasePrompts | undefined> => {
   return await context.databaseService
@@ -109,7 +109,7 @@ const updatePrompt = async (
  */
 const deletePrompt = async (
   context: Context,
-  id: number,
+  id: DatabasePromptsId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(PromptsModel)

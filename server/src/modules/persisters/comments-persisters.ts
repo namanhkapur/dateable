@@ -1,6 +1,6 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabaseComments, { DatabaseCommentsInitializer } from '../../types/database/DatabaseComments';
+import DatabaseComments, { DatabaseCommentsInitializer, DatabaseCommentsId } from '../../types/database/DatabaseComments';
 import { DatabaseProfileDraftsId } from '../../types/database/DatabaseProfileDrafts';
 import { DatabaseUsersId } from '../../types/database/DatabaseUsers';
 
@@ -15,7 +15,7 @@ export class CommentsModel extends BaseModel {
  */
 const getCommentById = async (
   context: Context,
-  id: number,
+  id: DatabaseCommentsId,
 ): Promise<DatabaseComments | undefined> => {
   return await context.databaseService
     .query(CommentsModel)
@@ -28,7 +28,7 @@ const getCommentById = async (
  */
 const getCommentsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<DatabaseComments[]> => {
   return await context.databaseService
     .query(CommentsModel)
@@ -41,7 +41,7 @@ const getCommentsByProfileDraftId = async (
  */
 const getCommentsByAuthorId = async (
   context: Context,
-  authorId: number,
+  authorId: DatabaseUsersId,
 ): Promise<DatabaseComments[]> => {
   return await context.databaseService
     .query(CommentsModel)
@@ -54,7 +54,7 @@ const getCommentsByAuthorId = async (
  */
 const getCommentsByType = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
   type: string,
 ): Promise<DatabaseComments[]> => {
   return await context.databaseService
@@ -68,7 +68,7 @@ const getCommentsByType = async (
  */
 const getSystemCommentsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<DatabaseComments[]> => {
   return await getCommentsByType(context, profileDraftId, 'system');
 };
@@ -78,7 +78,7 @@ const getSystemCommentsByProfileDraftId = async (
  */
 const getUserCommentsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<DatabaseComments[]> => {
   return await getCommentsByType(context, profileDraftId, 'user');
 };
@@ -139,7 +139,7 @@ const createSystemComment = async (
  */
 const updateComment = async (
   context: Context,
-  id: number,
+  id: DatabaseCommentsId,
   updates: Partial<Pick<DatabaseComments, 'message' | 'metadata'>>,
 ): Promise<DatabaseComments | undefined> => {
   return await context.databaseService
@@ -155,7 +155,7 @@ const updateComment = async (
  */
 const deleteComment = async (
   context: Context,
-  id: number,
+  id: DatabaseCommentsId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(CommentsModel)
@@ -169,7 +169,7 @@ const deleteComment = async (
  */
 const deleteCommentsByProfileDraftId = async (
   context: Context,
-  profileDraftId: number,
+  profileDraftId: DatabaseProfileDraftsId,
 ): Promise<number> => {
   return await context.databaseService
     .query(CommentsModel)

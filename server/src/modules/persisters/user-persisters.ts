@@ -1,6 +1,6 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabaseUsers, { DatabaseUsersInitializer } from '../../types/database/DatabaseUsers';
+import DatabaseUsers, { DatabaseUsersInitializer, DatabaseUsersId } from '../../types/database/DatabaseUsers';
 
 export interface UsersModel extends DatabaseUsers {}
 
@@ -42,7 +42,7 @@ const getUserByPhone = async (
  */
 const getUserById = async (
   context: Context,
-  id: number,
+  id: DatabaseUsersId,
 ): Promise<DatabaseUsers | undefined> => {
   return await context.databaseService
     .query(UsersModel)
@@ -69,7 +69,7 @@ const createUser = async (
  */
 const updateUser = async (
   context: Context,
-  id: number,
+  id: DatabaseUsersId,
   updates: Partial<Pick<DatabaseUsers, 'name' | 'phone'>>,
 ): Promise<DatabaseUsers | undefined> => {
   return await context.databaseService
@@ -85,7 +85,7 @@ const updateUser = async (
  */
 const deleteUser = async (
   context: Context,
-  id: number,
+  id: DatabaseUsersId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(UsersModel)

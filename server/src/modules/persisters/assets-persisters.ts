@@ -1,6 +1,7 @@
 import { Context } from '../../config/context';
 import { BaseModel } from '../../database/base-model';
-import DatabaseAssets, { DatabaseAssetsInitializer } from '../../types/database/DatabaseAssets';
+import DatabaseAssets, { DatabaseAssetsInitializer, DatabaseAssetsId } from '../../types/database/DatabaseAssets';
+import { DatabaseUsersId } from '../../types/database/DatabaseUsers';
 
 export interface AssetsModel extends DatabaseAssets {}
 
@@ -29,7 +30,7 @@ const upsertAsset = async (
  */
 const getAssetById = async (
   context: Context,
-  id: number,
+  id: DatabaseAssetsId,
 ): Promise<DatabaseAssets | undefined> => {
   return await context.databaseService
     .query(AssetsModel)
@@ -42,7 +43,7 @@ const getAssetById = async (
  */
 const getAssetsByUploaderId = async (
   context: Context,
-  uploadedBy: number,
+  uploadedBy: DatabaseUsersId,
 ): Promise<DatabaseAssets[]> => {
   return await context.databaseService
     .query(AssetsModel)
@@ -82,7 +83,7 @@ const createAsset = async (
  */
 const updateAsset = async (
   context: Context,
-  id: number,
+  id: DatabaseAssetsId,
   updates: Partial<Pick<DatabaseAssets, 'type' | 'url' | 'caption'>>,
 ): Promise<DatabaseAssets | undefined> => {
   return await context.databaseService
@@ -98,7 +99,7 @@ const updateAsset = async (
  */
 const deleteAsset = async (
   context: Context,
-  id: number,
+  id: DatabaseAssetsId,
 ): Promise<boolean> => {
   const deletedCount = await context.databaseService
     .query(AssetsModel)
