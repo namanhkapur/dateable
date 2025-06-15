@@ -42,7 +42,7 @@ generate-db-types: migrate
 
 .PHONY: migrate
 migrate:
-	cd ../database && flyway -password=${POSTGRES_PASSWORD} -configFiles=flyway.conf,flyway.local.conf -url=${KANEL_FLYWAY_URL} migrate
+	cd ../database && flyway -password=${POSTGRES_PASSWORD} -configFiles=flyway.conf,flyway.local.conf -url=${KANEL_FLYWAY_URL} clean migrate
 
 .PHONY: lint
 lint: build
