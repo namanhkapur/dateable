@@ -101,11 +101,12 @@ const updateProfileElement = async (
   context: Context,
   id: DatabaseProfileElementsId,
   updates: Partial<Pick<DatabaseProfileElements, 'position' | 'type' | 'assetId' | 'promptId' | 'textResponse' | 'subResponses'>>,
-): Promise<DatabaseProfileElements | undefined> => {
+): Promise<DatabaseProfileElements> => {
   return await context.databaseService
     .query(ProfileElementsModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };
@@ -148,55 +149,6 @@ const deleteProfileElementsByProfileDraftId = async (
     .delete();
 };
 
-/**
- * Reorder profile elements for a profile draft using batch upsert.
- */
-const reorderProfileElements = async (
-  context: Context,
-  profileDraftId: DatabaseProfileDraftsId,
-  elementIdPositionPairs: Array<{ id: DatabaseProfileElementsId; position: number }>,
-): Promise<void> => {
-  if (elementIdPositionPairs.length === 0) return;
-
-  // First, get the existing profile elements to preserve their data
-  const existingElements = await getProfileElementsByProfileDraftId(context, profileDraftId);
-  const existingElementsMap = new Map(existingElements.map(el => [el.id, el]));
-
-  // Create upsert records with updated positions
-  const upsertRecords: DatabaseProfileElementsInitializer[] = elementIdPositionPairs.map(({ id, position }) => {
-    const existingElement = existingElementsMap.get(id);
-    if (!existingElement) {
-      throw new Error(`Profile element with id ${id} not found in profile draft ${profileDraftId}`);
-    }
-    
-    return {
-      profileDraftId: existingElement.profileDraftId,
-      position,
-      type: existingElement.type,
-      assetId: existingElement.assetId,
-      promptId: existingElement.promptId,
-      textResponse: existingElement.textResponse,
-      subResponses: existingElement.subResponses,
-    };
-  });
-
-  await batchQuery(
-    context,
-    upsertRecords,
-    async (batch) => {
-      for (const record of batch) {
-        await context.databaseService
-          .query(ProfileElementsModel)
-          .insert(record)
-          .onConflict(['profile_draft_id', 'position'])
-          .merge();
-      }
-      return [];
-    },
-    50 // Smaller batch size for position updates
-  );
-};
-
 export const ProfileElementsPersister = {
   upsertProfileElement,
   getProfileElementById,
@@ -208,5 +160,4 @@ export const ProfileElementsPersister = {
   updateProfileElementPosition,
   deleteProfileElement,
   deleteProfileElementsByProfileDraftId,
-  reorderProfileElements,
 };

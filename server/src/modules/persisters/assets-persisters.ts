@@ -85,11 +85,12 @@ const updateAsset = async (
   context: Context,
   id: DatabaseAssetsId,
   updates: Partial<Pick<DatabaseAssets, 'type' | 'url' | 'caption'>>,
-): Promise<DatabaseAssets | undefined> => {
+): Promise<DatabaseAssets> => {
   return await context.databaseService
     .query(AssetsModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };

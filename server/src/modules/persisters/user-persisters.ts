@@ -71,11 +71,12 @@ const updateUser = async (
   context: Context,
   id: DatabaseUsersId,
   updates: Partial<Pick<DatabaseUsers, 'name' | 'phone'>>,
-): Promise<DatabaseUsers | undefined> => {
+): Promise<DatabaseUsers> => {
   return await context.databaseService
     .query(UsersModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };

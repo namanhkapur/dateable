@@ -95,11 +95,12 @@ const updatePrompt = async (
   context: Context,
   id: DatabasePromptsId,
   updates: Partial<Pick<DatabasePrompts, 'title' | 'type'>>,
-): Promise<DatabasePrompts | undefined> => {
+): Promise<DatabasePrompts> => {
   return await context.databaseService
     .query(PromptsModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };

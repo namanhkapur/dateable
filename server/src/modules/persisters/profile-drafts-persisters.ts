@@ -95,11 +95,12 @@ const updateProfileDraft = async (
   context: Context,
   id: DatabaseProfileDraftsId,
   updates: Partial<Pick<DatabaseProfileDrafts, 'isFinalized'>>,
-): Promise<DatabaseProfileDrafts | undefined> => {
+): Promise<DatabaseProfileDrafts> => {
   return await context.databaseService
     .query(ProfileDraftsModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };

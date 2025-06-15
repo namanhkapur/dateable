@@ -141,11 +141,12 @@ const updateComment = async (
   context: Context,
   id: DatabaseCommentsId,
   updates: Partial<Pick<DatabaseComments, 'message' | 'metadata'>>,
-): Promise<DatabaseComments | undefined> => {
+): Promise<DatabaseComments> => {
   return await context.databaseService
     .query(CommentsModel)
     .where({ id })
     .update(updates)
+    .throwIfNotFound()
     .returning('*')
     .first();
 };
