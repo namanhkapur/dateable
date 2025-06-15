@@ -1,0 +1,163 @@
+import { Context } from '../../config/context';
+import { BaseModel } from '../../database/base-model';
+import DatabaseProfileElements, { DatabaseProfileElementsInitializer, DatabaseProfileElementsId } from '../../types/database/DatabaseProfileElements';
+import { batchQuery } from '../../database/model-helpers';
+import { DatabaseProfileDraftsId } from '../../types/database/DatabaseProfileDrafts';
+import { DatabaseAssetsId } from '../../types/database/DatabaseAssets';
+import { DatabasePromptsId } from '../../types/database/DatabasePrompts';
+
+export interface ProfileElementsModel extends DatabaseProfileElements {}
+
+export class ProfileElementsModel extends BaseModel {
+  static override tableName = 'public.profile_elements';
+}
+
+/**
+ * Upserts a single profile element by the unique (profile_draft_id, position) constraint.
+ */
+const upsertProfileElement = async (
+  context: Context,
+  profileElement: DatabaseProfileElementsInitializer,
+): Promise<DatabaseProfileElements> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .insert(profileElement)
+    .onConflict(['profile_draft_id', 'position'])
+    .merge()
+    .returning('*')
+    .first();
+};
+
+/**
+ * Get a profile element by its ID.
+ */
+const getProfileElementById = async (
+  context: Context,
+  id: DatabaseProfileElementsId,
+): Promise<DatabaseProfileElements | undefined> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ id })
+    .first();
+};
+
+/**
+ * Get profile elements by profile draft ID, ordered by position.
+ */
+const getProfileElementsByProfileDraftId = async (
+  context: Context,
+  profileDraftId: DatabaseProfileDraftsId,
+): Promise<DatabaseProfileElements[]> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ profileDraftId })
+    .orderBy('position');
+};
+
+/**
+ * Get profile elements by type.
+ */
+const getProfileElementsByType = async (
+  context: Context,
+  profileDraftId: DatabaseProfileDraftsId,
+  type: string,
+): Promise<DatabaseProfileElements[]> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ profileDraftId, type })
+    .orderBy('position');
+};
+
+/**
+ * Get profile elements that reference a specific asset.
+ */
+const getProfileElementsByAssetId = async (
+  context: Context,
+  assetId: DatabaseAssetsId,
+): Promise<DatabaseProfileElements[]> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ assetId })
+    .orderBy('id');
+};
+
+/**
+ * Get profile elements that reference a specific prompt.
+ */
+const getProfileElementsByPromptId = async (
+  context: Context,
+  promptId: DatabasePromptsId,
+): Promise<DatabaseProfileElements[]> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ promptId })
+    .orderBy('id');
+};
+
+/**
+ * Update a profile element by ID.
+ */
+const updateProfileElement = async (
+  context: Context,
+  id: DatabaseProfileElementsId,
+  updates: Partial<Pick<DatabaseProfileElements, 'position' | 'type' | 'assetId' | 'promptId' | 'textResponse' | 'subResponses'>>,
+): Promise<DatabaseProfileElements> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ id })
+    .update(updates)
+    .throwIfNotFound()
+    .returning('*')
+    .first();
+};
+
+/**
+ * Update the position of a profile element.
+ */
+const updateProfileElementPosition = async (
+  context: Context,
+  id: DatabaseProfileElementsId,
+  position: number,
+): Promise<DatabaseProfileElements | undefined> => {
+  return await updateProfileElement(context, id, { position });
+};
+
+/**
+ * Delete a profile element by ID.
+ */
+const deleteProfileElement = async (
+  context: Context,
+  id: DatabaseProfileElementsId,
+): Promise<boolean> => {
+  const deletedCount = await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ id })
+    .delete();
+  return deletedCount > 0;
+};
+
+/**
+ * Delete all profile elements for a profile draft.
+ */
+const deleteProfileElementsByProfileDraftId = async (
+  context: Context,
+  profileDraftId: DatabaseProfileDraftsId,
+): Promise<number> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .where({ profileDraftId })
+    .delete();
+};
+
+export const ProfileElementsPersister = {
+  upsertProfileElement,
+  getProfileElementById,
+  getProfileElementsByProfileDraftId,
+  getProfileElementsByType,
+  getProfileElementsByAssetId,
+  getProfileElementsByPromptId,
+  updateProfileElement,
+  updateProfileElementPosition,
+  deleteProfileElement,
+  deleteProfileElementsByProfileDraftId,
+};
