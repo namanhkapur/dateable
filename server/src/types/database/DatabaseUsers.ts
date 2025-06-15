@@ -31,8 +31,8 @@ by the application. */
 
   name: string;
 
-  /** Index: users_email_key */
-  email: string;
+  /** Index: users_phone_key */
+  phone: string;
 }
 
 export interface DatabaseUsersInitializer {
@@ -68,6 +68,6 @@ by the application.
 
   name: string;
 
-  /** Index: users_email_key */
-  email: string;
+  /** Index: users_phone_key */
+  phone: string;
 }

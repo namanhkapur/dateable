@@ -2,7 +2,7 @@
 CREATE TABLE users (
   LIKE template.base_table INCLUDING ALL,
   name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL
+  phone TEXT UNIQUE NOT NULL
 );
 
 -- ASSETS
