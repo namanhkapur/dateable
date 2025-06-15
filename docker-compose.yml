@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: 'no'
+    ports:
+      - ${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}
+    volumes:
+      - ~/apps/postgres:/${POSTGRES_VOLUME}
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+
+  flyway:
+    environment:
+      - FLYWAY_USER=${POSTGRES_USER}
+      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
+      - FLYWAY_URL=${KANEL_FLYWAY_URL}
+      - FLYWAY_GROUP=${FLYWAY_GROUP}
+    image: flyway/flyway:9.20
+    command: -locations=filesystem:/flyway/sql -connectRetries=10 migrate
+    volumes:
+      - ${PWD}/database/migrations:/flyway/sql
+    depends_on:
+      - postgres
+    network_mode: 'host'
+
+  dateable_server:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: dateable_server
+    ports:
+      - 80:80
+      - 8443:${HTTPS_PORT}
+    environment:
+      - FLYWAY_USER=${POSTGRES_USER}
+      - FLYWAY_PASSWORD=${POSTGRES_PASSWORD}
+      - FLYWAY_GROUP=${FLYWAY_GROUP}
+      - DB_HOST=host.docker.internal
+    depends_on:
+      - flyway
+    restart: 'no'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    # volumes:
+    #   - ${TELEGRAM_WEBHOOK_CERTIFICATE}:/etc/ssl/certs/telegram_webhook_certificate.pem
+    #   - ${TELEGRAM_WEBHOOK_CERTIFICATE_PRIVATE}:/etc/ssl/certs/telegram_webhook_certificate.key
+
+  postgres_test:
+    image: postgres:15
+    restart: 'no'
+    env_file: server/.env.test
+    ports:
+      - ${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/dateable/data
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST_AUTH_METHOD=trust

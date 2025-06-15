@@ -1,0 +1,113 @@
+default_language_version:
+  node: system
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-added-large-files # Prevents the addition of files over 500kB.
+        exclude: |
+          (?x)^(
+            |.*\.ndjson
+            |.*output_all_dates_monthly\.csv
+          )$
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: no-commit-to-branch
+        stages: [push]
+      - id: trailing-whitespace
+        exclude: |
+          (?x)^(
+            |.*\.snap
+            |server/src/types/database/.*
+          )$
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+  - repo: local
+    hooks:
+      - id: forbid-binary
+        name: forbid-binary
+        entry: Committing binary files is generally a bad idea (i.e. a database dump). If you are sure, add the file name to the exclude entry for this hook in .pre-commit-config.yaml.
+        language: fail
+        types: [binary]
+        exclude_types: [jar, image, ttf, icon]
+      - id: ktlint
+        name: ktlint
+        entry: ktlint -F --experimental --verbose --editorconfig=.editorconfig
+        language: system
+        files: .*\.(kt|kts)$
+      - id: forbid-create-schema
+        name: forbid-create-schema
+        # 'CREATE SCHEMA foo' is generally a mistake. Use `CREATE SCHEMA IF NOT EXISTS foo'
+        entry: (?i)create schema (?!if not exists)
+        language: pygrep
+        types: [sql]
+      - id: function-like-constructs-must-be-in-repeatable-migrations
+        name: Functions, triggers, and views must be in repeatable migrations
+        # Functions, triggers, and views should be place in a repeatable migration (prefixed with R__ instead of Vxxx__) to make future modifications easier to review https://flywaydb.org/documentation/concepts/migrations#repeatable-migrations
+        entry: (?i)create( or replace)? (function|trigger|((materialized )?view))
+        language: pygrep
+        files: .*/V.*\.sql$
+        exclude: database/migrations/V(1|2|3)__.*$
+
+      - id: no_logger_warning
+        name: Use logger.warn not logger.warning
+        language: pygrep
+        entry: logger\.warning
+        exclude: '.pre-commit-config.yaml'
+      - id: do_not_export_from_test
+        name: Exports from test files are not allowed
+        language: pygrep
+        files: \.test\.ts$
+        # If you import from a test file you will end up also running all of the tests in that file
+        # another time. This will generally cause very confusing errors. So all code that needs to
+        # be shared between multiple test files needs to be in its own file.
+        entry: ^export
+      - id: no_db_test_only_or_skip
+        name: dbTest.skip and dbTest.only should not be committed
+        language: pygrep
+        entry: (dbTest|dbTestNoTransaction)\.(only|skip)
+        files: \.test\.ts$
+      - id: no-package-lock
+        name: no-package-lock
+        entry: No package-lock.json allowed. Use yarn not npm
+        language: fail
+        files: 'package-lock\.json'
+      - id: use_not_toBeNil
+        name: use not.toBeNil instead of not.toBeNull or not.toBeUndefined
+        entry: not\.toBe(Null|Undefined)
+        language: pygrep
+        files: \.ts$
+      - id: no-renaming-table-migration
+        name: Migrations should not rename a table. (If you need to, remember to drop the triggers. See V508/9.)
+        entry: 'alter table \w* rename to'
+        files: \.sql
+        args: [-i]
+        language: pygrep
+      - id: no_buffer_from_base64url
+        name: The node version on our server does not support base64url
+        entry: Buffer\.from\(.*, 'base64url'\)
+        language: pygrep
+        files: \.ts$
+      - id: no_import_assert_from_console
+        name: Don't import assert from 'console'
+        entry: import { assert } from 'console'
+        language: pygrep
+        files: \.ts$
+      - id: no_new_migration_name
+        name: Migrations need a descriptive name
+        entry: .
+        language: pygrep
+        files: backend/database/src/main/resources/db/migration/.*new_migration.sql
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.5.1
+    hooks:
+      - id: prettier
+        additional_dependencies:
+          - prettier@2.8.7

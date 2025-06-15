@@ -1,0 +1,107 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+.env
+package-lock.json
+node_modules/
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env.production
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage directory used by tools like istanbul
+coverage
+
+# Compiled binary addons (http://nodejs.org/api/addons.html)
+build/Release
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+
+#
+### FUNCTIONS
+#
+
+# Compiled JavaScript files
+functions/**/*.js
+functions/**/*.js.map
+
+# Except the ESLint config file
+!.eslintrc.js
+
+# Node.js dependency directory
+server/lib*
+functions/node_modules/
+functions/lib/*
+!functions/src/lib/*
+functions/scripts/seed/*
+!functions/scripts/seed/firebase-export-metadata.json
+functions/.runtimeconfig.json
+
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.xml
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# CMake
+cmake-build-*/
+
+#vim
+*.swp
+*.swo
+
+# flyway
+**/report.html.html
+**/report.html.json
+**/report.html
+**/report.json
+
+
+.vscode/*
+
+# remove below to see the downloaded files from npi
+*.csv
+*.zip
+*.pdf
+backup.dump
