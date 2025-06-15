@@ -1,0 +1,9 @@
+{
+  "reporterEnabled": "spec, mocha-junit-reporter",
+  "mochaJunitReporterReporterOptions": {
+    "mochaFile": "./reports/mocha/junit.xml",
+    "suiteTitleSeparatedBy": " | ",
+    "useFullSuiteTitle": true,
+    "rootSuiteTitle": "TEST"
+  }
+}
