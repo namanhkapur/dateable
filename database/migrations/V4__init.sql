@@ -2,7 +2,9 @@
 CREATE TABLE users (
   LIKE template.base_table INCLUDING ALL,
   name TEXT NOT NULL,
-  phone TEXT UNIQUE NOT NULL
+  -- E.164 phone number format validation:
+  -- ACCEPTED: +1234567890, +441234567890, +33123456789, +8613812345678
+  phone TEXT UNIQUE NOT NULL CHECK (phone ~ '^\+[1-9]\d{1,14}$')
 );
 
 -- ASSETS

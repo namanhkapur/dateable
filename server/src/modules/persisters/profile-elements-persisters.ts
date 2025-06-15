@@ -91,20 +91,6 @@ const getProfileElementsByPromptId = async (
 };
 
 /**
- * Create a new profile element.
- */
-const createProfileElement = async (
-  context: Context,
-  profileElement: DatabaseProfileElementsInitializer,
-): Promise<DatabaseProfileElements> => {
-  return await context.databaseService
-    .query(ProfileElementsModel)
-    .insert(profileElement)
-    .returning('*')
-    .first();
-};
-
-/**
  * Update a profile element by ID.
  */
 const updateProfileElement = async (
@@ -178,7 +164,6 @@ export const ProfileElementsPersister = {
   getProfileElementsByType,
   getProfileElementsByAssetId,
   getProfileElementsByPromptId,
-  createProfileElement,
   updateProfileElement,
   updateProfileElementPosition,
   deleteProfileElement,
