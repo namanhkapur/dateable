@@ -10,14 +10,14 @@ CREATE TABLE assets (
   LIKE template.base_table INCLUDING ALL,
   uploaded_by BIGINT REFERENCES users(id),
   type TEXT CHECK (type IN ('photo', 'video', 'voice')),
-  url TEXT NOT NULL,
+  url TEXT UNIQUE NOT NULL,
   caption TEXT
 );
 
 -- PROMPTS
 CREATE TABLE prompts (
   LIKE template.base_table INCLUDING ALL,
-  title TEXT NOT NULL,
+  title TEXT UNIQUE NOT NULL,
   type TEXT CHECK (type IN ('text', 'voice', 'multi'))
 );
 
@@ -38,7 +38,8 @@ CREATE TABLE profile_elements (
   asset_id BIGINT REFERENCES assets(id),
   prompt_id BIGINT REFERENCES prompts(id),
   text_response TEXT,
-  sub_responses JSONB
+  sub_responses JSONB,
+  UNIQUE(profile_draft_id, position)
 );
 
 -- COMMENTS

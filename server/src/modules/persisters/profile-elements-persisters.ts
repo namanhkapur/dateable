@@ -9,6 +9,22 @@ export class ProfileElementsModel extends BaseModel {
 }
 
 /**
+ * Upserts a single profile element by the unique (profile_draft_id, position) constraint.
+ */
+const upsertProfileElement = async (
+  context: Context,
+  profileElement: DatabaseProfileElementsInitializer,
+): Promise<DatabaseProfileElements> => {
+  return await context.databaseService
+    .query(ProfileElementsModel)
+    .insert(profileElement)
+    .onConflict(['profile_draft_id', 'position'])
+    .merge()
+    .returning('*')
+    .first();
+};
+
+/**
  * Get a profile element by its ID.
  */
 const getProfileElementById = async (
@@ -156,6 +172,7 @@ const reorderProfileElements = async (
 };
 
 export const ProfileElementsPersister = {
+  upsertProfileElement,
   getProfileElementById,
   getProfileElementsByProfileDraftId,
   getProfileElementsByType,
