@@ -178,5 +178,3 @@ export const dateToZonedDateTime = (date: Date) => {
 
 export const zonedDateTimeToDate = (date: ZonedDateTime) =>
   convert(date).toDate();
-
-export const sleep = promisify(setTimeout);

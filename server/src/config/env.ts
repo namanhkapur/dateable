@@ -29,6 +29,10 @@ export const env = cleanEnv(
     FLYWAY_GROUP: bool(),
     RUN_JOBS: bool(),
     IS_TEST: bool(),
+    AWS_REGION: str({ default: 'us-east-1' }),
+    AWS_S3_BUCKET: str(),
+    AWS_ACCESS_KEY_ID: str({ default: '' }),
+    AWS_SECRET_ACCESS_KEY: str({ default: '' }),
     DB_HOST: host(),
   },
   {
