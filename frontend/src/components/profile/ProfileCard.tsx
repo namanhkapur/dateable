@@ -5,14 +5,15 @@ interface ProfileCardProps {
     avatar: string;
   };
   type: 'romantic' | 'roast' | 'bestie' | 'flirty';
-  onClick: () => void;
+  onClick?: () => void;
+  bgColorClass?: string;
 }
 
-export function ProfileCard({ title, createdBy, type, onClick }: ProfileCardProps) {
+export function ProfileCard({ title, createdBy, type, onClick, bgColorClass = 'bg-card' }: ProfileCardProps) {
   return (
     <button
       onClick={onClick}
-      className="group relative flex h-[300px] flex-col overflow-hidden rounded-lg border bg-card text-left transition-shadow hover:shadow-md"
+      className={`group relative flex h-[300px] flex-col overflow-hidden rounded-lg border ${bgColorClass} text-left transition-shadow hover:shadow-md`}
     >
       <div className="flex flex-1 flex-col p-4">
         <div className="mb-2">
@@ -34,4 +35,4 @@ export function ProfileCard({ title, createdBy, type, onClick }: ProfileCardProp
       </div>
     </button>
   );
-} 
+}
