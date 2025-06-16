@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import expressListRoutes from 'express-list-routes';
 import { router as example } from '../modules/example/example-route';
+import { router as uploads } from '../modules/uploads/file-upload-routes';
 import { router as index } from './routes';
 import { router as catchall } from './routes/catchall';
 
@@ -9,6 +10,7 @@ export const buildApi = () => {
   const app = Router();
   app.use(index);
   app.use('/example', example);
+  app.use('/uploads', uploads);
 
   // catchall requests not matched in our API
   app.use(catchall);

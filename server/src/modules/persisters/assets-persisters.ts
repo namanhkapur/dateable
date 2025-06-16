@@ -65,6 +65,19 @@ const getAssetsByType = async (
 };
 
 /**
+ * Get all assets (with optional limit)
+ */
+const getAllAssets = async (
+  context: Context,
+  limit: number = 100,
+): Promise<DatabaseAssets[]> => {
+  return await context.databaseService
+    .query(AssetsModel)
+    .orderBy('id', 'desc')
+    .limit(limit);
+};
+
+/**
  * Create a new asset.
  */
 const createAsset = async (
@@ -114,6 +127,7 @@ export const AssetsPersister = {
   getAssetById,
   getAssetsByUploaderId,
   getAssetsByType,
+  getAllAssets,
   createAsset,
   updateAsset,
   deleteAsset,

@@ -34,6 +34,7 @@ by the application. */
 
   type: string | null;
 
+  /** Index: assets_url_key */
   url: string;
 
   caption: string | null;
@@ -74,6 +75,7 @@ by the application.
 
   type?: string | null;
 
+  /** Index: assets_url_key */
   url: string;
 
   caption?: string | null;

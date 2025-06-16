@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "@aws-sdk/client-s3": "^3.828.0",
+    "@aws-sdk/s3-request-presigner": "^3.828.0",
     "@faker-js/faker": "^8.4.1",
     "@jest/expect-utils": "^29.7.0",
     "@js-joda/core": "^5.5.3",
@@ -82,7 +84,7 @@
     "@types/invariant": "^2.2.37",
     "@types/jest": "^29.5.12",
     "@types/mocha": "^10.0.6",
-    "@types/multer": "^1.4.7",
+    "@types/multer": "^1.4.13",
     "@types/node": "^20.4.5",
     "@types/node-fetch": "^2.6.12",
     "@types/pg": "^8.10.2",

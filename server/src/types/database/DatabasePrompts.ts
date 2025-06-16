@@ -29,6 +29,7 @@ by the application. */
 // @Custom removed property by .kanelrc.js
 // last_modified: ZonedDateTime;
 
+  /** Index: prompts_title_key */
   title: string;
 
   type: string | null;
@@ -65,6 +66,7 @@ by the application.
 // @Custom removed property by .kanelrc.js
 // last_modified?: ZonedDateTime;
 
+  /** Index: prompts_title_key */
   title: string;
 
   type?: string | null;

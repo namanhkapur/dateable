@@ -32,8 +32,10 @@ by the application. */
 // @Custom removed property by .kanelrc.js
 // last_modified: ZonedDateTime;
 
+  /** Index: profile_elements_profile_draft_id_position_key */
   profileDraftId: DatabaseProfileDraftsId | null;
 
+  /** Index: profile_elements_profile_draft_id_position_key */
   position: number;
 
   type: string | null;
@@ -78,8 +80,10 @@ by the application.
 // @Custom removed property by .kanelrc.js
 // last_modified?: ZonedDateTime;
 
+  /** Index: profile_elements_profile_draft_id_position_key */
   profileDraftId?: DatabaseProfileDraftsId | null;
 
+  /** Index: profile_elements_profile_draft_id_position_key */
   position: number;
 
   type?: string | null;
