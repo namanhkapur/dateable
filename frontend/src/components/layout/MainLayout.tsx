@@ -1,11 +1,6 @@
-import { useLocation } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { useLocation, Outlet } from 'react-router-dom';
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
 
@@ -40,7 +35,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </header>
       <main className="container py-6">
-        {children}
+        <div className="relative">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

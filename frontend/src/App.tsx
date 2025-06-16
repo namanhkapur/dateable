@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MainLayout } from './components/layout/MainLayout';
-import { ProfilePage } from './pages/ProfilePage';
-import { LoginPage } from './pages/LoginPage';
-import LandingPage from './pages/LandingPage';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { ProfilePage } from '@/features/profile/components/ProfilePage';
+import { LoginPage } from '@/features/auth/components/LoginForm';
+import { LandingPage } from '@/features/landing/components/LandingPage';
 
 export function App() {
   return (

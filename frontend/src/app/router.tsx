@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { HomeRoute } from './routes/home';
-import { LoginPage } from '../features/auth/pages/LoginPage';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { ProfilePage } from '@/features/profile/components/ProfilePage';
+import { LoginPage } from '@/features/auth/components/LoginForm';
+import { LandingPage } from '@/features/landing/components/LandingPage';
 import { supabase } from '../features/auth/api/auth';
 import React from 'react';
 
@@ -25,11 +27,19 @@ const AuthCallback = () => {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomeRoute />,
+    element: <MainLayout><LandingPage /></MainLayout>,
   },
   {
     path: '/login',
-    element: <LoginPage />,
+    element: <MainLayout><LoginPage /></MainLayout>,
+  },
+  {
+    path: '/@:username',
+    element: <MainLayout><ProfilePage /></MainLayout>,
+  },
+  {
+    path: '/profile',
+    element: <MainLayout><ProfilePage /></MainLayout>,
   },
   {
     path: '/auth/callback',

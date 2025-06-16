@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ProfileCard } from '../components/profile/ProfileCard';
-import { MediaLibraryDialog } from '../components/media/MediaLibraryDialog';
-import { PromptsLibraryDialog } from '../components/prompts/PromptsLibraryDialog';
-import { ProfileViewModal } from '../components/profile/ProfileViewModal';
+import { ProfileCard } from '@/features/profile/components/ProfileCard';
+import { MediaLibraryDialog } from '@/features/profile/components/MediaLibraryDialog';
+import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibraryDialog';
+import { ProfileViewModal } from '@/features/profile/components/ProfileViewModal';
 
 // Pastel/neutral Tailwind color classes
 const pastelColors = [

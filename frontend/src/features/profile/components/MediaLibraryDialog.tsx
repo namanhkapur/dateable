@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 // Mock media data
 const mockMedia = [
