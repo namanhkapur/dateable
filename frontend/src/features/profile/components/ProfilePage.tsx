@@ -7,6 +7,17 @@ import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibra
 import { ProfileViewModal } from '@/features/profile/components/ProfileViewModal';
 import { HingeProfileModal } from './HingeProfileModal';
 import { useSessionData } from '@/features/auth/hooks/useSessionData';
+import { userApi } from '@/features/auth/api/user';
+import { PhotoUploadDialog } from '@/components/PhotoUpload';
+
+interface ProfileUser {
+  id: number;
+  username: string;
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  authId?: string | null;
+}
 
 // Pastel/neutral Tailwind color classes
 const pastelColors = [
@@ -139,19 +150,91 @@ const mockProfiles = [
 
 export function ProfilePage() {
   const { username } = useParams();
-  const { userName } = useSessionData();
+  const { userName, userId } = useSessionData();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const handleUploadComplete = () => {
+    // Refresh page or update state as needed after upload
+    console.log('Upload completed successfully');
+  };
+
   useEffect(() => {
-    // Check if this is the user's own profile
-    setIsOwner(username === '@me');
-  }, [username]);
+    let isActive = true;
+
+    const fetchProfileUser = async () => {
+      if (!username) {
+        if (isActive) {
+          setError('Username not provided');
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        if (isActive) setLoading(true);
+        const response = await userApi.getUser({ username });
+        
+        if (isActive && response.success && response.user) {
+          setProfileUser(response.user);
+          
+          // Check if this is the current user's own profile
+          setIsOwner(response.user.id === userId);
+        } else {
+          if (isActive) setError('User not found');
+        }
+      } catch (err) {
+        console.error('Error fetching profile user:', err);
+        if (isActive) setError('Failed to load profile');
+      } finally {
+        if (isActive) setLoading(false);
+      }
+    };
+
+    fetchProfileUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, [username, userId]);
 
   // Show all profiles without filtering
   const filteredProfiles = mockProfiles;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profileUser) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile not found</h2>
+          <p className="text-muted-foreground mb-4">
+            {error || 'The user you are looking for does not exist.'}
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="text-primary hover:underline"
+          >
+            Go back home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -162,7 +245,7 @@ export function ProfilePage() {
             <span>😊</span>
           </div>
           <h1 className="text-2xl font-bold">
-            {isOwner ? `Welcome back, ${userName}!` : `Viewing ${username || 'User'}'s Dateable`}
+            {isOwner ? `Welcome back, ${profileUser.username}!` : `Viewing ${profileUser.username}'s Dateable`}
           </h1>
         </div>
         <p className="text-muted-foreground">
@@ -173,27 +256,41 @@ export function ProfilePage() {
       </div>
 
       {/* Action Buttons Row */}
-      {!isOwner && (
-        <div className="flex justify-end pb-2">
-          <div className="flex gap-2">
-            <MediaLibraryDialog username={username || 'user'} />
-            <PromptsLibraryDialog username={username || 'user'} />
-          </div>
+      <div className="flex justify-end pb-2">
+        <div className="flex gap-2">
+          {isOwner ? (
+            // Owner buttons: Upload photos and manage media/prompts
+            <>
+              <PhotoUploadDialog onUploadComplete={handleUploadComplete}>
+                <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                  Upload Photos
+                </button>
+              </PhotoUploadDialog>
+              <MediaLibraryDialog username={profileUser.username} />
+              <PromptsLibraryDialog username={profileUser.username} />
+            </>
+          ) : (
+            // Non-owner buttons: Help create profiles for friend
+            <>
+              <MediaLibraryDialog username={profileUser.username} />
+              <PromptsLibraryDialog username={profileUser.username} />
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Profile Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Create Card for non-owners */}
-        {!isOwner && (
-          <div
-            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-[#7c2e9a] transition-colors"
-            onClick={() => setShowProfileModal(true)}
-          >
-            <span className="text-4xl mb-2">+</span>
-            <span className="font-semibold">Create Profile</span>
-          </div>
-        )}
+        {/* Create Card - available for everyone */}
+        <div
+          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-[#7c2e9a] transition-colors"
+          onClick={() => setShowProfileModal(true)}
+        >
+          <span className="text-4xl mb-2">+</span>
+          <span className="font-semibold">
+            {isOwner ? 'Create Your Profile' : 'Create Profile'}
+          </span>
+        </div>
 
         {/* Profile Cards */}
         {filteredProfiles.map((profile) => (
@@ -212,7 +309,7 @@ export function ProfilePage() {
       <HingeProfileModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        profileName="Namanh"
+        profileName={profileUser.username}
       />
     </div>
   );

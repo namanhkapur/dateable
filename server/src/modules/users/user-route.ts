@@ -21,3 +21,6 @@ addPublicRoute(router, '/search',  UserController.searchUsers);
 
 // POST /users/delete - Delete user by ID
 addPublicRoute(router, '/delete',  UserController.deleteUser);
+
+// POST /users/checkUsernameAvailability - Check if username is available
+addPublicRoute(router, '/checkUsernameAvailability',  UserController.checkUsernameAvailability);

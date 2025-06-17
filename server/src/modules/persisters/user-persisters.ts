@@ -73,7 +73,7 @@ const createUser = async (
 const updateUser = async (
   context: Context,
   id: DatabaseUsersId,
-  updates: Partial<Pick<DatabaseUsers, 'name' | 'phone'>>,
+  updates: Partial<Pick<DatabaseUsers, 'name' | 'phone' | 'username' | 'email' | 'authId'>>,
 ): Promise<DatabaseUsers> => context.databaseService
     .query(UsersModel)
     .where({ id })
@@ -107,11 +107,50 @@ const getUsersByNamePattern = async (
     .where('name', 'ilike', `%${namePattern}%`)
     .orderBy('name');
 
+/**
+ * Get a user by their username.
+ */
+const getUserByUsername = async (
+  context: Context,
+  username: string,
+): Promise<DatabaseUsers | undefined> => context.databaseService
+    .query(UsersModel)
+    .whereRaw('lower(username) = ?', username.toLowerCase())
+    .first();
+
+/**
+ * Check if a username exists.
+ */
+const isUsernameAvailable = async (
+  context: Context,
+  username: string,
+): Promise<boolean> => {
+  const user = await context.databaseService
+    .query(UsersModel)
+    .whereRaw('lower(username) = ?', username.toLowerCase())
+    .first();
+  return !user;
+};
+
+/**
+ * Get a user by their email.
+ */
+const getUserByEmail = async (
+  context: Context,
+  email: string,
+): Promise<DatabaseUsers | undefined> => context.databaseService
+    .query(UsersModel)
+    .where({ email })
+    .first();
+
 export const UsersPersister = {
   upsertUser,
   getUserByPhone,
   getUserById,
   getUserByAuthId,
+  getUserByUsername,
+  getUserByEmail,
+  isUsernameAvailable,
   createUser,
   updateUser,
   deleteUser,

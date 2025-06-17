@@ -3,9 +3,11 @@ import { Controller } from '../../utils/controller';
 import { UsersPersister } from '../persisters/user-persisters';
 import { DatabaseUsersId, DatabaseUsersInitializer } from '../../types/database/DatabaseUsers';
 import { throwError } from '../../utils/error-handler';
+import { UsernameValidator } from '../../utils/username-validator';
 
 interface CreateUserData {
   name: string;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -14,6 +16,7 @@ interface CreateUserData {
 interface UpdateUserData {
   userId: DatabaseUsersId;
   name?: string;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -21,6 +24,7 @@ interface UpdateUserData {
 
 interface GetUserData {
   userId?: DatabaseUsersId;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -40,9 +44,16 @@ const createUser = async (context: Context, data: CreateUserData): Promise<any> 
     throwError('Name is required');
   }
 
+  // Validate username if provided
+  let validatedUsername: string | null = null;
+  if (data.username) {
+    validatedUsername = await UsernameValidator.validateAndAssertUsername(context, data.username);
+  }
+
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
+    username: validatedUsername,
     phone: data.phone || null,
     email: data.email || null,
     authId: data.authId || null,
@@ -72,6 +83,7 @@ const createUser = async (context: Context, data: CreateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -95,9 +107,22 @@ const upsertUser = async (context: Context, data: CreateUserData): Promise<any> 
   // At this point we know data.phone is defined and not empty
   const phoneValue = data.phone!.trim();
 
+  // Validate username if provided
+  let validatedUsername: string | null = null;
+  if (data.username) {
+    // For upsert, we need to exclude the current user (if exists) from availability check
+    const existingUser = await UsersPersister.getUserByPhone(context, phoneValue);
+    validatedUsername = await UsernameValidator.validateAndAssertUsername(
+      context,
+      data.username,
+      existingUser?.id
+    );
+  }
+
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
+    username: validatedUsername,
     phone: phoneValue,
     email: data.email || null,
     authId: data.authId || null,
@@ -116,6 +141,7 @@ const upsertUser = async (context: Context, data: CreateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -132,13 +158,26 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
   }
 
   // Prepare update data (only include non-undefined fields)
-  const updates: Partial<Pick<DatabaseUsersInitializer, 'name' | 'phone' | 'email' | 'authId'>> = {};
+  const updates: Partial<Pick<DatabaseUsersInitializer, 'name' | 'username' | 'phone' | 'email' | 'authId'>> = {};
   
   if (data.name !== undefined) {
     if (!data.name || data.name.trim().length === 0) {
       throwError('Name cannot be empty');
     }
     updates.name = data.name.trim();
+  }
+  
+  if (data.username !== undefined) {
+    if (data.username && data.username.trim().length > 0) {
+      // For updates, exclude the current user from availability check
+      updates.username = await UsernameValidator.validateAndAssertUsername(
+        context,
+        data.username,
+        data.userId
+      );
+    } else {
+      updates.username = null;
+    }
   }
   
   if (data.phone !== undefined) {
@@ -169,6 +208,7 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -180,21 +220,24 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
  * Get user by various identifiers
  */
 const getUser = async (context: Context, data: GetUserData): Promise<any> => {
-  if (!data.userId && !data.phone && !data.email && !data.authId) {
-    throwError('At least one identifier (userId, phone, email, or authId) is required');
+  if (!data.userId && !data.username && !data.phone && !data.email && !data.authId) {
+    throwError('At least one identifier (userId, username, phone, email, or authId) is required');
   }
 
   let user;
 
   if (data.userId) {
     user = await UsersPersister.getUserById(context, data.userId);
+  } else if (data.username) {
+    user = await UsersPersister.getUserByUsername(context, data.username);
   } else if (data.phone) {
     user = await UsersPersister.getUserByPhone(context, data.phone);
   } else if (data.authId) {
     user = await UsersPersister.getUserByAuthId(context, data.authId);
+  } else if (data.email) {
+    user = await UsersPersister.getUserByEmail(context, data.email);
   } else {
-    // For email, we would need to add this method to the persister
-    throwError('Search by email not yet implemented');
+    throwError('At least one identifier (userId, username, phone, email, or authId) is required');
   }
 
   if (!user) {
@@ -209,6 +252,7 @@ const getUser = async (context: Context, data: GetUserData): Promise<any> => {
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -242,6 +286,7 @@ const searchUsers = async (context: Context, data: SearchUsersData): Promise<any
     users: limitedUsers.map(user => ({
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -278,6 +323,25 @@ const deleteUser = async (context: Context, data: { userId: DatabaseUsersId }): 
   };
 };
 
+/**
+ * Check if a username is available
+ */
+const checkUsernameAvailability = async (context: Context, data: { username: string }): Promise<any> => {
+  if (!data.username || data.username.trim().length === 0) {
+    throwError('Username is required');
+  }
+
+  // Validate format only (don't throw on availability)
+  const normalizedUsername = UsernameValidator.validateUsernameFormat(data.username);
+  const isAvailable = await UsersPersister.isUsernameAvailable(context, normalizedUsername);
+
+  return {
+    success: true,
+    username: normalizedUsername,
+    available: isAvailable,
+  };
+};
+
 export const UserController = Controller.register({
   name: 'user',
   controllers: {
@@ -303,6 +367,10 @@ export const UserController = Controller.register({
     },
     deleteUser: {
       fn: deleteUser,
+      config: {},
+    },
+    checkUsernameAvailability: {
+      fn: checkUsernameAvailability,
       config: {},
     },
   },

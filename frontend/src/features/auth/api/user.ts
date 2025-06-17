@@ -1,5 +1,6 @@
 interface CreateUserRequest {
   name: string;
+  username?: string;
   email?: string;
   authId?: string;
 }
@@ -9,6 +10,7 @@ interface CreateUserResponse {
   user?: {
     id: number;
     name: string;
+    username: string | null;
     email: string | null;
     authId: string | null;
     phone: string | null;
@@ -19,6 +21,7 @@ interface CreateUserResponse {
 interface GetUserRequest {
   authId?: string;
   userId?: number;
+  username?: string;
   phone?: string;
   email?: string;
 }
@@ -28,10 +31,22 @@ interface GetUserResponse {
   user?: {
     id: number;
     name: string;
+    username: string | null;
     email: string | null;
     authId: string | null;
     phone: string | null;
   };
+  message?: string;
+}
+
+interface CheckUsernameRequest {
+  username: string;
+}
+
+interface CheckUsernameResponse {
+  success: boolean;
+  username: string;
+  available: boolean;
   message?: string;
 }
 
@@ -55,8 +70,9 @@ export const userApi = {
   },
 
   getUser: async (data: GetUserRequest): Promise<GetUserResponse> => {
-    console.log('🌐 Making API call to:', `${API_BASE_URL}/users/get`);
-    console.log('📤 Request data:', data);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🌐 Making API call to:', `${API_BASE_URL}/users/get`);
+    }
     
     const response = await fetch(`${API_BASE_URL}/users/get`, {
       method: 'POST',
@@ -66,14 +82,27 @@ export const userApi = {
       body: JSON.stringify(data),
     });
 
-    console.log('📥 API response status:', response.status);
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const result = await response.json();
-    console.log('📄 API response body:', result);
     return result;
+  },
+
+  checkUsernameAvailability: async (data: CheckUsernameRequest): Promise<CheckUsernameResponse> => {
+    const response = await fetch(`${API_BASE_URL}/users/checkUsernameAvailability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.message ?? `HTTP ${response.status}`);
+    }
+    return payload;
   },
 };

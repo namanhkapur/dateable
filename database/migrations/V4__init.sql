@@ -2,6 +2,7 @@
 CREATE TABLE users (
   LIKE template.base_table INCLUDING ALL,
   name TEXT NOT NULL,
+  username TEXT UNIQUE CHECK (username ~ '^[a-zA-Z0-9_-]{3,20}$'),
   -- E.164 phone number format validation:
   -- ACCEPTED: +1234567890, +441234567890, +33123456789, +8613812345678
   phone TEXT UNIQUE CHECK (phone ~ '^\+[1-9]\d{1,14}$'),
@@ -13,6 +14,7 @@ CREATE TABLE users (
 -- Add comments for Supabase fields
 COMMENT ON COLUMN users.auth_id IS 'Supabase auth user ID (UUID)';
 COMMENT ON COLUMN users.email IS 'User email address from Supabase auth';
+COMMENT ON COLUMN users.username IS 'Unique username for profile routing (3-20 chars, alphanumeric, _, -)';
 
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_auth_id ON users(auth_id);

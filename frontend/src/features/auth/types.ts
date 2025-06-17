@@ -15,6 +15,7 @@ export interface AuthState {
 export interface ServerUser {
   id: number;
   name: string;
+  username: string | null;
   email: string | null;
   authId: string | null;
   phone: string | null;

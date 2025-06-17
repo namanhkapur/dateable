@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
-import { useSessionData } from '@/features/auth/hooks/useSessionData';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 const AlternativesPanel = ({
   isOpen,
@@ -243,9 +242,35 @@ const sampleProfile: Profile = {
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const { userName } = useSessionData();
+  const { supabaseUser, serverUser, loading } = useAuth();
+  const [selectedProfile, setSelectedProfile] = useState<Profile>(sampleProfile);
   const [editingAsset, setEditingAsset] = useState<{ type: 'photo' | 'text'; index: number } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  
+  useEffect(() => {
+    console.log('LandingPage mounted');
+  }, []);
+
+  const handleCreateProfile = () => {
+    // Don't do anything while auth is still loading
+    if (loading) {
+      return;
+    }
+    
+    if (supabaseUser && serverUser !== undefined) {
+      // User is authenticated and we have profile data
+      if (serverUser?.username) {
+        navigate(`/profile/${serverUser.username}`);
+      } else {
+        // User doesn't have username yet, redirect to complete profile
+        navigate('/complete-profile');
+      }
+    } else {
+      // User is not authenticated, redirect to login
+      navigate('/login');
+    }
+  };
+
 
   const handleAssetClick = (type: 'photo' | 'text', index: number) => {
     console.log('Asset clicked:', { type, index });
@@ -263,8 +288,31 @@ export function LandingPage() {
     console.log('Alternative selected:', alternative);
     if (!editingAsset) return;
     
-    // For now, we'll just log the selection since we're not storing profiles
-    console.log('Selected alternative:', alternative);
+    setSelectedProfile(prev => {
+      const updatedAssets = [...prev.assets];
+      const assetIndex = editingAsset.index;
+      
+      if (updatedAssets[assetIndex]) {
+        if (editingAsset.type === 'photo') {
+          updatedAssets[assetIndex] = { 
+            ...updatedAssets[assetIndex], 
+            url: alternative 
+          };
+        } else {
+          updatedAssets[assetIndex] = {
+            ...updatedAssets[assetIndex],
+            question: alternative.question,
+            answer: alternative.answer
+          };
+        }
+      }
+      
+      return {
+        ...prev,
+        assets: updatedAssets,
+      };
+    });
+    
     handleClosePanel();
   };
 
@@ -279,36 +327,105 @@ export function LandingPage() {
               {/* Left side - Hero text */}
               <div className="text-center lg:text-left">
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Welcome back, <span className="underline decoration-primary">{userName}</span>!
+                  Your friend is <span className="underline decoration-primary">Dateable</span>.
                   <br />
-                  Ready to create your profile?
+                  They just need your help.
                 </h1>
                 <p className="text-xl text-muted-foreground mb-10 max-w-2xl">
                   Create a Hinge profile for your friend 👫 so they can put their best 👞 forward. <span className="bg-yellow-100 px-1.5 py-0.5 rounded font-medium">We know, that mirror selfie has to go.</span>
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button size="lg" onClick={() => navigate('/home/profile')}>
-                    Create a Profile
+                  <Button size="lg" onClick={handleCreateProfile} disabled={loading}>
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Loading...
+                      </div>
+                    ) : (
+                      "Create a Profile"
+                    )}
                   </Button>
                   <Button 
                     variant="outline" 
                     size="lg" 
-                    onClick={() => navigate('/home/profile')}
+                    disabled
+                    // onClick intentionally omitted while feature is disabled
                   >
                     Browse Profiles
                   </Button>
                 </div>
               </div>
 
-              {/* Right side - Profile Preview */}
+              {/* Right side - Profile View */}
               <div className="w-full flex justify-center">
                 <div className="w-full max-w-xs lg:max-w-md">
                   <div className="bg-white rounded-xl shadow-xl overflow-hidden h-[90vh] max-h-[800px] w-full flex flex-col">
                     <div className="flex-1 overflow-y-auto p-6">
-                      <div className="text-center py-8">
-                        <p className="text-lg mb-4">Your Profile Preview</p>
-                        <p className="text-muted-foreground">Start by creating your first profile. You can add photos, prompts, and more.</p>
-                      </div>
+                      <h2 className="text-2xl font-bold mb-6">{selectedProfile.title}</h2>
+                      
+                      {/* Get all photos and prompts in order */}
+                      {(() => {
+                        const photos = selectedProfile.assets.filter(asset => asset.type === 'photo');
+                        const prompts = selectedProfile.assets.filter(asset => asset.type === 'text');
+                        const items = [];
+                        
+                        // Alternate between photo and prompt
+                        const maxLength = Math.max(photos.length, prompts.length);
+                        for (let i = 0; i < maxLength; i++) {
+                          if (i < photos.length) {
+                            items.push({ type: 'photo', data: photos[i] });
+                          }
+                          if (i < prompts.length) {
+                            items.push({ type: 'text', data: prompts[i] });
+                          }
+                        }
+                        
+                        // Add the last two photos at the end if they exist
+                        const remainingPhotos = photos.slice(maxLength);
+                        if (remainingPhotos.length >= 2) {
+                          items.push(
+                            { type: 'photo', data: remainingPhotos[0] },
+                            { type: 'photo', data: remainingPhotos[1] }
+                          );
+                        } else if (remainingPhotos.length === 1) {
+                          items.push({ type: 'photo', data: remainingPhotos[0] });
+                        }
+                        
+                        return items.map((item, index) => (
+                          <div key={`${item.type}-${item.data.id}-${index}`} className="mb-6">
+                            {item.type === 'photo' ? (
+                              <div 
+                                className="w-full aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => {
+                                  const photoIndex = selectedProfile.assets.findIndex(asset => 
+                                    asset.type === 'photo' && asset.id === item.data.id
+                                  );
+                                  handleAssetClick('photo', photoIndex);
+                                }}
+                              >
+                                <img 
+                                  src={item.data.url} 
+                                  alt={`Profile ${index + 1}`} 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div 
+                                className="p-6 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
+                                onClick={() => {
+                                  const promptIndex = selectedProfile.assets.findIndex(asset => 
+                                    asset.type === 'text' && asset.id === item.data.id
+                                  );
+                                  handleAssetClick('text', promptIndex);
+                                }}
+                              >
+                                <h3 className="font-medium text-gray-900 mb-2">{item.data.question}</h3>
+                                <p className="text-gray-600">{item.data.answer}</p>
+                              </div>
+                            )}
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -318,14 +435,14 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* Alternatives Panel */}
+      {/* Alternatives Side Panel */}
       <AlternativesPanel
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         editingAsset={editingAsset}
-        selectedProfile={null}
+        selectedProfile={selectedProfile}
         onSelectAlternative={handleSelectAlternative}
       />
     </div>
   );
-} 
+}
