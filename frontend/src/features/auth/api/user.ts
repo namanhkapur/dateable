@@ -1,0 +1,79 @@
+interface CreateUserRequest {
+  name: string;
+  email?: string;
+  authId?: string;
+}
+
+interface CreateUserResponse {
+  success: boolean;
+  user?: {
+    id: number;
+    name: string;
+    email: string | null;
+    authId: string | null;
+    phone: string | null;
+  };
+  message?: string;
+}
+
+interface GetUserRequest {
+  authId?: string;
+  userId?: number;
+  phone?: string;
+  email?: string;
+}
+
+interface GetUserResponse {
+  success: boolean;
+  user?: {
+    id: number;
+    name: string;
+    email: string | null;
+    authId: string | null;
+    phone: string | null;
+  };
+  message?: string;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+export const userApi = {
+  createUser: async (data: CreateUserRequest): Promise<CreateUserResponse> => {
+    const response = await fetch(`${API_BASE_URL}/users/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  getUser: async (data: GetUserRequest): Promise<GetUserResponse> => {
+    console.log('🌐 Making API call to:', `${API_BASE_URL}/users/get`);
+    console.log('📤 Request data:', data);
+    
+    const response = await fetch(`${API_BASE_URL}/users/get`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    console.log('📥 API response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('📄 API response body:', result);
+    return result;
+  },
+};

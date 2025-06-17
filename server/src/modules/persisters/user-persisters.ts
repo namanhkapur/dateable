@@ -45,6 +45,17 @@ const getUserById = async (
     .first();
 
 /**
+ * Get a user by their auth ID (Supabase UUID).
+ */
+const getUserByAuthId = async (
+  context: Context,
+  authId: string,
+): Promise<DatabaseUsers | undefined> => context.databaseService
+    .query(UsersModel)
+    .where({ authId })
+    .first();
+
+/**
  * Create a new user.
  */
 const createUser = async (
@@ -100,6 +111,7 @@ export const UsersPersister = {
   upsertUser,
   getUserByPhone,
   getUserById,
+  getUserByAuthId,
   createUser,
   updateUser,
   deleteUser,

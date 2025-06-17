@@ -2,12 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-This project is a web app that allows a user to create a profile for themselves, and friends can create a curate a dating profile on behalf of their friends.
+This project is a full-stack web application that allows users to create dating profiles for themselves, and friends can create and curate dating profiles on behalf of their friends.
 
-Each user will have 
+Each user will have:
 1. A database pool of assets (photos, videos, audio) that can be used to create a profile
 2. A list of profiles that their friends have made for them 
-3. A list of profiles that they have made for their friends 
+3. A list of profiles that they have made for their friends
+
+## Project Structure
+
+- **`frontend/`** - React/TypeScript frontend with Vite
+- **`server/`** - Node.js/Express backend with TypeScript
+- **`database/`** - PostgreSQL migrations and schema 
 
 ## Development Commands
 
@@ -19,6 +25,11 @@ make compose    # Start local PostgreSQL in Docker
 make clean      # Clear older builds
 make setup      # Download packages (yarn)
 make watch      # Start development server with auto-rebuild
+
+# Frontend development (separate terminal)
+cd frontend
+npm install     # Install frontend dependencies
+npm run dev     # Start Vite development server
 ```
 
 ### Database Operations
@@ -41,8 +52,13 @@ make watch-test          # Run tests in watch mode
 
 ### Build
 ```bash
-# From server directory
+# Backend build (from server directory)
 make build              # TypeScript build
+make lint               # Run ESLint with auto-fix
+
+# Frontend build (from frontend directory)
+npm run build           # TypeScript + Vite build
+npm run lint            # Run ESLint
 ```
 
 ### Production Deployment
@@ -53,7 +69,24 @@ make stop-production    # Stop production containers
 make start-production   # Start production containers
 ```
 
+## AI Instructions
+
+### Code Generation
+- Always explain architectural decisions
+- Ask clarifying questions if requirements are ambiguous
+- Suggest improvements but don't implement without approval
+- Generate complete, working code blocks (no placeholders)
+
+### Problem Solving
+- Start with the simplest solution that works
+- Only add complexity when specifically requested
+- Highlight potential issues or edge cases
+- Suggest testing approaches for new features
+
 ## Architecture Overview
+
+### Frontend project structure
+- Should follow bulletproof react formatting- https://github.com/alan2207/bulletproof-react/blob/master/docs/project-structure.md
 
 ### Database Layer
 - **PostgreSQL** with Flyway migrations in `database/migrations/`

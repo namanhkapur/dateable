@@ -190,10 +190,11 @@ const getUser = async (context: Context, data: GetUserData): Promise<any> => {
     user = await UsersPersister.getUserById(context, data.userId);
   } else if (data.phone) {
     user = await UsersPersister.getUserByPhone(context, data.phone);
+  } else if (data.authId) {
+    user = await UsersPersister.getUserByAuthId(context, data.authId);
   } else {
-    // For email or authId, we would need to add these methods to the persister
-    // For now, fall back to ID lookup
-    throwError('Search by email or authId not yet implemented');
+    // For email, we would need to add this method to the persister
+    throwError('Search by email not yet implemented');
   }
 
   if (!user) {

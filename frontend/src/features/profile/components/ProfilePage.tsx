@@ -6,6 +6,7 @@ import { MediaLibraryDialog } from '@/features/profile/components/MediaLibraryDi
 import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibraryDialog';
 import { ProfileViewModal } from '@/features/profile/components/ProfileViewModal';
 import { HingeProfileModal } from './HingeProfileModal';
+import { useSessionData } from '@/features/auth/hooks/useSessionData';
 
 // Pastel/neutral Tailwind color classes
 const pastelColors = [
@@ -138,28 +139,16 @@ const mockProfiles = [
 
 export function ProfilePage() {
   const { username } = useParams();
-  const isOwner = username === '@me'; // This will be replaced with actual auth logic
+  const { userName } = useSessionData();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>('');
   const [isOwner, setIsOwner] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get user info from session storage
-    const userId = sessionStorage.getItem('userId');
-    const userEmail = sessionStorage.getItem('userEmail');
-    const storedUserName = sessionStorage.getItem('userName');
-
-    if (userId && userEmail && storedUserName) {
-      setUserName(storedUserName);
-      // Check if this is the user's own profile
-      setIsOwner(username === '@me');
-    } else {
-      // If any user info is missing, redirect to login
-      navigate('/login', { replace: true });
-    }
-  }, [username, navigate]);
+    // Check if this is the user's own profile
+    setIsOwner(username === '@me');
+  }, [username]);
 
   // Show all profiles without filtering
   const filteredProfiles = mockProfiles;
@@ -173,7 +162,7 @@ export function ProfilePage() {
             <span>😊</span>
           </div>
           <h1 className="text-2xl font-bold">
-            {isOwner ? 'Welcome back, Namanh!' : `Viewing ${username}'s Dateable`}
+            {isOwner ? `Welcome back, ${userName}!` : `Viewing ${username || 'User'}'s Dateable`}
           </h1>
         </div>
         <p className="text-muted-foreground">
