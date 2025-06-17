@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { supabase } from '@/features/auth/api/auth';
 
 const AlternativesPanel = ({
   isOpen,
@@ -241,13 +243,23 @@ const sampleProfile: Profile = {
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const [selectedProfile, setSelectedProfile] = useState<Profile>(sampleProfile);
   const [editingAsset, setEditingAsset] = useState<{ type: 'photo' | 'text'; index: number } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [userName, setUserName] = useState<string>('');
   
   useEffect(() => {
-    console.log('LandingPage mounted');
-  }, []);
+    // Get user info from session storage
+    const userId = sessionStorage.getItem('userId');
+    const userEmail = sessionStorage.getItem('userEmail');
+    const storedUserName = sessionStorage.getItem('userName');
+
+    if (userId && userEmail && storedUserName) {
+      setUserName(storedUserName);
+    } else {
+      // If any user info is missing, redirect to login
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   const handleAssetClick = (type: 'photo' | 'text', index: number) => {
     console.log('Asset clicked:', { type, index });
@@ -265,35 +277,10 @@ export function LandingPage() {
     console.log('Alternative selected:', alternative);
     if (!editingAsset) return;
     
-    const updatedAssets = [...selectedProfile.assets];
-    const assetIndex = updatedAssets.findIndex(
-      (asset, idx) => asset.type === editingAsset.type && idx === editingAsset.index
-    );
-    
-    if (assetIndex !== -1) {
-      if (editingAsset.type === 'photo') {
-        updatedAssets[assetIndex] = { 
-          ...updatedAssets[assetIndex], 
-          url: alternative 
-        };
-      } else {
-        updatedAssets[assetIndex] = {
-          ...updatedAssets[assetIndex],
-          question: alternative.question,
-          answer: alternative.answer
-        };
-      }
-      
-      setSelectedProfile({
-        ...selectedProfile,
-        assets: updatedAssets,
-      });
-    }
-    
+    // For now, we'll just log the selection since we're not storing profiles
+    console.log('Selected alternative:', alternative);
     handleClosePanel();
   };
-
-  console.log('Rendering LandingPage');
 
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white w-full overflow-hidden">
@@ -305,15 +292,15 @@ export function LandingPage() {
               {/* Left side - Hero text */}
               <div className="text-center lg:text-left">
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-                  Your friend is <span className="underline decoration-primary">Dateable</span>.
+                  Welcome back, <span className="underline decoration-primary">{userName}</span>!
                   <br />
-                  They just need your help.
+                  Ready to create your profile?
                 </h1>
                 <p className="text-xl text-muted-foreground mb-10 max-w-2xl">
                   Create a Hinge profile for your friend 👫 so they can put their best 👞 forward. <span className="bg-yellow-100 px-1.5 py-0.5 rounded font-medium">We know, that mirror selfie has to go.</span>
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button size="lg" onClick={() => navigate('/login')}>
+                  <Button size="lg" onClick={() => navigate('/profile')}>
                     Create a Profile
                   </Button>
                   <Button 
@@ -326,76 +313,15 @@ export function LandingPage() {
                 </div>
               </div>
 
-              {/* Right side - Profile View */}
+              {/* Right side - Profile Preview */}
               <div className="w-full flex justify-center">
                 <div className="w-full max-w-xs lg:max-w-md">
                   <div className="bg-white rounded-xl shadow-xl overflow-hidden h-[90vh] max-h-[800px] w-full flex flex-col">
                     <div className="flex-1 overflow-y-auto p-6">
-                      <h2 className="text-2xl font-bold mb-6">{selectedProfile.title}</h2>
-                      
-                      {/* Get all photos and prompts in order */}
-                      {(() => {
-                        const photos = selectedProfile.assets.filter(asset => asset.type === 'photo');
-                        const prompts = selectedProfile.assets.filter(asset => asset.type === 'text');
-                        const items = [];
-                        
-                        // Alternate between photo and prompt
-                        const maxLength = Math.max(photos.length, prompts.length);
-                        for (let i = 0; i < maxLength; i++) {
-                          if (i < photos.length) {
-                            items.push({ type: 'photo', data: photos[i] });
-                          }
-                          if (i < prompts.length) {
-                            items.push({ type: 'text', data: prompts[i] });
-                          }
-                        }
-                        
-                        // Add the last two photos at the end if they exist
-                        const remainingPhotos = photos.slice(maxLength);
-                        if (remainingPhotos.length >= 2) {
-                          items.push(
-                            { type: 'photo', data: remainingPhotos[0] },
-                            { type: 'photo', data: remainingPhotos[1] }
-                          );
-                        } else if (remainingPhotos.length === 1) {
-                          items.push({ type: 'photo', data: remainingPhotos[0] });
-                        }
-                        
-                        return items.map((item, index) => (
-                          <div key={`${item.type}-${item.data.id}-${index}`} className="mb-6">
-                            {item.type === 'photo' ? (
-                              <div 
-                                className="w-full aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                                onClick={() => {
-                                  const photoIndex = selectedProfile.assets.findIndex(asset => 
-                                    asset.type === 'photo' && asset.id === item.data.id
-                                  );
-                                  handleAssetClick('photo', photoIndex);
-                                }}
-                              >
-                                <img 
-                                  src={item.data.url} 
-                                  alt={`Profile ${index + 1}`} 
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            ) : (
-                              <div 
-                                className="p-6 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
-                                onClick={() => {
-                                  const promptIndex = selectedProfile.assets.findIndex(asset => 
-                                    asset.type === 'text' && asset.id === item.data.id
-                                  );
-                                  handleAssetClick('text', promptIndex);
-                                }}
-                              >
-                                <h3 className="font-medium text-gray-900 mb-2">{item.data.question}</h3>
-                                <p className="text-gray-600">{item.data.answer}</p>
-                              </div>
-                            )}
-                          </div>
-                        ));
-                      })()}
+                      <div className="text-center py-8">
+                        <p className="text-lg mb-4">Your Profile Preview</p>
+                        <p className="text-muted-foreground">Start by creating your first profile. You can add photos, prompts, and more.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -405,12 +331,12 @@ export function LandingPage() {
         </div>
       </div>
 
-      {/* Alternatives Side Panel */}
+      {/* Alternatives Panel */}
       <AlternativesPanel
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         editingAsset={editingAsset}
-        selectedProfile={selectedProfile}
+        selectedProfile={null}
         onSelectAlternative={handleSelectAlternative}
       />
     </div>

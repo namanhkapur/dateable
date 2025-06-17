@@ -11,17 +11,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const authApi = {
-  login: async (credentials: LoginCredentials) => {
-    const { data, error } = await supabase.auth.signInWithPassword(credentials);
-    if (error) throw error;
-    return data;
-  },
-
-  logout: async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  },
-
   signInWithMagicLink: async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -30,12 +19,16 @@ export const authApi = {
       },
     });
     if (error) throw error;
-    return { success: true };
   },
 
   signOut: async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    return { success: true };
+  },
+
+  getSession: async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session;
   },
 }; 

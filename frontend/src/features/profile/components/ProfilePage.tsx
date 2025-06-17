@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../../lib/supabase';
 import { ProfileCard } from '@/features/profile/components/ProfileCard';
 import { MediaLibraryDialog } from '@/features/profile/components/MediaLibraryDialog';
 import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibraryDialog';
@@ -140,6 +141,25 @@ export function ProfilePage() {
   const isOwner = username === '@me'; // This will be replaced with actual auth logic
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
+  const [isOwner, setIsOwner] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get user info from session storage
+    const userId = sessionStorage.getItem('userId');
+    const userEmail = sessionStorage.getItem('userEmail');
+    const storedUserName = sessionStorage.getItem('userName');
+
+    if (userId && userEmail && storedUserName) {
+      setUserName(storedUserName);
+      // Check if this is the user's own profile
+      setIsOwner(username === '@me');
+    } else {
+      // If any user info is missing, redirect to login
+      navigate('/login', { replace: true });
+    }
+  }, [username, navigate]);
 
   // Show all profiles without filtering
   const filteredProfiles = mockProfiles;
@@ -158,7 +178,7 @@ export function ProfilePage() {
         </div>
         <p className="text-muted-foreground">
           {isOwner
-            ? 'You have 5 profiles and 3 invites waiting'
+            ? 'Create your first profile'
             : 'Create a profile for your friend'}
         </p>
       </div>
@@ -186,7 +206,7 @@ export function ProfilePage() {
           </div>
         )}
 
-        {/* Mock Profile Cards */}
+        {/* Profile Cards */}
         {filteredProfiles.map((profile) => (
           <ProfileCard
             key={profile.id}
@@ -197,14 +217,6 @@ export function ProfilePage() {
             onClick={() => setOpenProfileId(profile.id)}
           />
         ))}
-        {/* Profile View Modal (Hinge-style) */}
-        {openProfileId && (
-          <ProfileViewModal
-            isOwner={false}
-            profile={mockProfiles.find(p => p.id === openProfileId)}
-            onClose={() => setOpenProfileId(null)}
-          />
-        )}
       </div>
 
       {/* Hinge-Style Profile Modal */}
