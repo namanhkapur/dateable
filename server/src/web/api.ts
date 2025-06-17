@@ -5,14 +5,12 @@ import { router as example } from '../modules/example/example-route';
 import { router as uploads } from '../modules/uploads/file-upload-routes';
 import { router as index } from './routes';
 import { router as catchall } from './routes/catchall';
-import userRoutes from '../modules/users/userRoutes';
 
 export const buildApi = () => {
   const app = Router();
   app.use(index);
   app.use('/example', example);
   app.use('/uploads', uploads);
-  app.use('/users', userRoutes);
 
   // catchall requests not matched in our API
   app.use(catchall);

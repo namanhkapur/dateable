@@ -4,19 +4,8 @@ CREATE TABLE users (
   name TEXT NOT NULL,
   -- E.164 phone number format validation:
   -- ACCEPTED: +1234567890, +441234567890, +33123456789, +8613812345678
-  phone TEXT UNIQUE CHECK (phone ~ '^\+[1-9]\d{1,14}$'),
-  -- Supabase auth fields
-  auth_id UUID UNIQUE,
-  email TEXT UNIQUE
+  phone TEXT UNIQUE NOT NULL CHECK (phone ~ '^\+[1-9]\d{1,14}$')
 );
-
--- Add comments for Supabase fields
-COMMENT ON COLUMN users.auth_id IS 'Supabase auth user ID (UUID)';
-COMMENT ON COLUMN users.email IS 'User email address from Supabase auth';
-
--- Add indexes for faster lookups
-CREATE INDEX idx_users_auth_id ON users(auth_id);
-CREATE INDEX idx_users_email ON users(email);
 
 -- ASSETS
 CREATE TABLE assets (
