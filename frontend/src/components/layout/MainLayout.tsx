@@ -1,11 +1,6 @@
-import { useLocation } from 'react-router-dom';
-import type { ReactNode } from 'react';
+import { useLocation, Outlet } from 'react-router-dom';
 
-interface MainLayoutProps {
-  children: ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
 
@@ -23,6 +18,20 @@ export function MainLayout({ children }: MainLayoutProps) {
             </a>
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+            <nav className="flex items-center space-x-4">
+              <a 
+                href="/upload"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Upload Photos
+              </a>
+              <a 
+                href="/profile"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                My Profile
+              </a>
+            </nav>
             {!isLoginPage && (
               <div className="w-full flex-1 md:w-auto md:flex-none">
                 <a 
@@ -33,14 +42,13 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </a>
               </div>
             )}
-            <nav className="flex items-center space-x-2">
-              {/* Add avatar and notification icons here */}
-            </nav>
           </div>
         </div>
       </header>
       <main className="container py-6">
-        {children}
+        <div className="relative">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

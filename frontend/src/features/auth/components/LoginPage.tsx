@@ -1,4 +1,4 @@
-import { LoginForm } from '@/components/auth/LoginForm';
+import { LoginForm } from '@/features/auth/components/LoginForm';
 
 export function LoginPage() {
   return (
@@ -8,4 +8,4 @@ export function LoginPage() {
       </div>
     </div>
   );
-}
+} 

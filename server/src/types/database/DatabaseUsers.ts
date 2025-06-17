@@ -32,7 +32,21 @@ by the application. */
   name: string;
 
   /** Index: users_phone_key */
-  phone: string;
+  phone: string | null;
+
+  /**
+   * Supabase auth user ID (UUID)
+   * Index: idx_users_auth_id
+   * Index: users_auth_id_key
+   */
+  authId: string | null;
+
+  /**
+   * User email address from Supabase auth
+   * Index: idx_users_email
+   * Index: users_email_key
+   */
+  email: string | null;
 }
 
 export interface DatabaseUsersInitializer {
@@ -69,5 +83,19 @@ by the application.
   name: string;
 
   /** Index: users_phone_key */
-  phone: string;
+  phone?: string | null;
+
+  /**
+   * Supabase auth user ID (UUID)
+   * Index: idx_users_auth_id
+   * Index: users_auth_id_key
+   */
+  authId?: string | null;
+
+  /**
+   * User email address from Supabase auth
+   * Index: idx_users_email
+   * Index: users_email_key
+   */
+  email?: string | null;
 }

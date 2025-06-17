@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PhotoUploadDialog } from '@/components/PhotoUpload';
 
 interface AssetLibraryProps {
   isOwner: boolean;
@@ -18,6 +19,20 @@ interface AssetLibraryProps {
 
 export function AssetLibrary({ isOwner, assets }: AssetLibraryProps) {
   const [activeTab, setActiveTab] = useState<'media' | 'prompts'>('media');
+  const [media, setMedia] = useState(assets.media);
+
+  const handleUploadComplete = (uploadedAssets: any[]) => {
+    // Convert uploaded assets to the expected format
+    const newMedia = uploadedAssets
+      .filter(upload => upload.success && upload.asset)
+      .map(upload => ({
+        id: upload.asset.id,
+        url: upload.asset.url,
+        type: upload.asset.type === 'photo' ? 'photo' as const : 'video' as const,
+      }));
+    
+    setMedia(prev => [...prev, ...newMedia]);
+  };
 
   return (
     <div className="space-y-6">
@@ -26,9 +41,11 @@ export function AssetLibrary({ isOwner, assets }: AssetLibraryProps) {
         <h2 className="text-2xl font-bold">Asset Library</h2>
         {isOwner && (
           <div className="flex space-x-2">
-            <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              Upload Media
-            </button>
+            <PhotoUploadDialog onUploadComplete={handleUploadComplete}>
+              <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                Upload Media
+              </button>
+            </PhotoUploadDialog>
             <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
               Upload Prompts
             </button>
@@ -63,7 +80,7 @@ export function AssetLibrary({ isOwner, assets }: AssetLibraryProps) {
       {/* Content */}
       <div className="space-y-6">
         {activeTab === 'media' ? (
-          <MediaGrid media={assets.media} isOwner={isOwner} />
+          <MediaGrid media={media} isOwner={isOwner} onUploadComplete={handleUploadComplete} />
         ) : (
           <PromptsList prompts={assets.prompts} isOwner={isOwner} />
         )}
@@ -75,9 +92,11 @@ export function AssetLibrary({ isOwner, assets }: AssetLibraryProps) {
 function MediaGrid({
   media,
   isOwner,
+  onUploadComplete,
 }: {
   media: AssetLibraryProps['assets']['media'];
   isOwner: boolean;
+  onUploadComplete?: (uploadedAssets: any[]) => void;
 }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -103,12 +122,14 @@ function MediaGrid({
         </div>
       ))}
       {isOwner && (
-        <button className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary">
-          <div className="text-center">
-            <div className="text-2xl">+</div>
-            <p className="mt-1 text-sm text-muted-foreground">Add Media</p>
-          </div>
-        </button>
+        <PhotoUploadDialog onUploadComplete={onUploadComplete}>
+          <button className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-primary">
+            <div className="text-center">
+              <div className="text-2xl">+</div>
+              <p className="mt-1 text-sm text-muted-foreground">Add Media</p>
+            </div>
+          </button>
+        </PhotoUploadDialog>
       )}
     </div>
   );

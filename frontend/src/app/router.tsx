@@ -1,6 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
-import { HomeRoute } from './routes/home';
-import { LoginPage } from '../features/auth/pages/LoginPage';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { ProfilePage } from '@/features/profile/components/ProfilePage';
+import { LoginForm } from '@/features/auth/components/LoginForm';
+import { LandingPage } from '@/features/landing/components/LandingPage';
+import { UploadPage } from '@/features/profile/components/UploadPage';
 import { supabase } from '../features/auth/api/auth';
 import React from 'react';
 
@@ -25,11 +28,29 @@ const AuthCallback = () => {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <HomeRoute />,
-  },
-  {
-    path: '/login',
-    element: <LoginPage />,
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <LandingPage />,
+      },
+      {
+        path: 'login',
+        element: <LoginForm />,
+      },
+      {
+        path: '@:username',
+        element: <ProfilePage />,
+      },
+      {
+        path: 'profile',
+        element: <ProfilePage />,
+      },
+      {
+        path: 'upload',
+        element: <UploadPage />,
+      },
+    ],
   },
   {
     path: '/auth/callback',

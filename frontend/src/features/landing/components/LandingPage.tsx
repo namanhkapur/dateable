@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -239,24 +239,30 @@ const sampleProfile: Profile = {
   ],
 };
 
-const LandingPage = () => {
+export function LandingPage() {
   const navigate = useNavigate();
   const [selectedProfile, setSelectedProfile] = useState<Profile>(sampleProfile);
-  const [editingAsset, setEditingAsset] = useState<{type: 'photo' | 'text', index: number} | null>(null);
+  const [editingAsset, setEditingAsset] = useState<{ type: 'photo' | 'text'; index: number } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   
+  useEffect(() => {
+    console.log('LandingPage mounted');
+  }, []);
+
   const handleAssetClick = (type: 'photo' | 'text', index: number) => {
+    console.log('Asset clicked:', { type, index });
     setEditingAsset({ type, index });
     setIsPanelOpen(true);
   };
 
   const handleClosePanel = () => {
+    console.log('Closing panel');
     setIsPanelOpen(false);
-    // Small delay to allow the panel to close before clearing the editing asset
-    setTimeout(() => setEditingAsset(null), 300);
+    setEditingAsset(null);
   };
 
   const handleSelectAlternative = (alternative: any) => {
+    console.log('Alternative selected:', alternative);
     if (!editingAsset) return;
     
     const updatedAssets = [...selectedProfile.assets];
@@ -286,6 +292,8 @@ const LandingPage = () => {
     
     handleClosePanel();
   };
+
+  console.log('Rendering LandingPage');
 
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white w-full overflow-hidden">
@@ -407,8 +415,4 @@ const LandingPage = () => {
       />
     </div>
   );
-};
-
-
-
-export default LandingPage;
+} 
