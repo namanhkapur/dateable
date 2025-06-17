@@ -10,6 +10,15 @@ import { useSessionData } from '@/features/auth/hooks/useSessionData';
 import { userApi } from '@/features/auth/api/user';
 import { PhotoUploadDialog } from '@/components/PhotoUpload';
 
+interface ProfileUser {
+  id: number;
+  username: string;
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  authId?: string | null;
+}
+
 // Pastel/neutral Tailwind color classes
 const pastelColors = [
   'bg-pink-100',
@@ -145,7 +154,7 @@ export function ProfilePage() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [profileUser, setProfileUser] = useState<any>(null);
+  const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -156,34 +165,42 @@ export function ProfilePage() {
   };
 
   useEffect(() => {
+    let isActive = true;
+
     const fetchProfileUser = async () => {
       if (!username) {
-        setError('Username not provided');
-        setLoading(false);
+        if (isActive) {
+          setError('Username not provided');
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
+        if (isActive) setLoading(true);
         const response = await userApi.getUser({ username });
         
-        if (response.success && response.user) {
+        if (isActive && response.success && response.user) {
           setProfileUser(response.user);
           
           // Check if this is the current user's own profile
           setIsOwner(response.user.id === userId);
         } else {
-          setError('User not found');
+          if (isActive) setError('User not found');
         }
       } catch (err) {
         console.error('Error fetching profile user:', err);
-        setError('Failed to load profile');
+        if (isActive) setError('Failed to load profile');
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
 
     fetchProfileUser();
+
+    return () => {
+      isActive = false;
+    };
   }, [username, userId]);
 
   // Show all profiles without filtering
@@ -228,7 +245,7 @@ export function ProfilePage() {
             <span>😊</span>
           </div>
           <h1 className="text-2xl font-bold">
-            {isOwner ? `Welcome back, ${profileUser.name}!` : `Viewing ${profileUser.name}'s Dateable`}
+            {isOwner ? `Welcome back, ${profileUser.username}!` : `Viewing ${profileUser.username}'s Dateable`}
           </h1>
         </div>
         <p className="text-muted-foreground">
@@ -292,7 +309,7 @@ export function ProfilePage() {
       <HingeProfileModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        profileName={profileUser.name}
+        profileName={profileUser.username}
       />
     </div>
   );
