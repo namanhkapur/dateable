@@ -39,9 +39,29 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
     }
   }
 
-  // For public routes (like login/signup), redirect authenticated users to home
-  if (!requireAuth && supabaseUser && serverUser) {
-    return <Navigate to="/home" replace />;
+  // For public routes, handle authenticated users
+  if (!requireAuth && supabaseUser) {
+    // If user is authenticated but needs to complete profile
+    if (isNewUser || !serverUser) {
+      console.log('🔀 RouteGuard: Redirecting to complete profile');
+      return <Navigate to="/complete-profile" replace />;
+    }
+    
+    // If user is authenticated and has a profile, redirect to their profile
+    if (serverUser && serverUser.username) {
+      console.log('🔀 RouteGuard: Redirecting authenticated user to profile:', serverUser.username);
+      return <Navigate to={`/profile/${serverUser.username}`} replace />;
+    }
+  }
+  
+  // Debug logging for public routes
+  if (!requireAuth) {
+    console.log('🔍 RouteGuard: Public route check:', {
+      supabaseUser: !!supabaseUser,
+      serverUser: !!serverUser,
+      username: serverUser?.username,
+      isNewUser
+    });
   }
 
   return <>{children}</>;

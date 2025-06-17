@@ -11,6 +11,7 @@ export const useSessionData = () => {
     // User display information
     userName: serverUser?.name || supabaseUser?.user_metadata?.name || 'User',
     userEmail: serverUser?.email || supabaseUser?.email || null,
+    username: serverUser?.username || null,
     userId: serverUser?.id || null,
     authId: supabaseUser?.id || null,
     

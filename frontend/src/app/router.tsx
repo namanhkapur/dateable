@@ -52,8 +52,8 @@ const AuthCallback = () => {
           return;
         }
 
-        // AuthContext will determine if user needs to complete profile or go to home
-        navigate('/home', { replace: true });
+        // Navigate to root and let RouteGuard handle the redirect logic
+        navigate('/', { replace: true });
       } catch (error) {
         console.error('Error during auth callback:', error);
         navigate('/', { replace: true });
@@ -78,13 +78,22 @@ export const router = createHashRouter([
     path: '/',
     element: (
       <RouteGuard>
+        <LandingPage />
+      </RouteGuard>
+    ),
+    errorElement: <RouteErrorBoundary />,
+  },
+  {
+    path: '/login',
+    element: (
+      <RouteGuard>
         <LoginPage />
       </RouteGuard>
     ),
     errorElement: <RouteErrorBoundary />,
   },
   {
-    path: '/home',
+    path: '/profile/:username',
     element: (
       <RouteGuard requireAuth>
         <MainLayout />
@@ -94,22 +103,12 @@ export const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <LandingPage />,
-        errorElement: <RouteErrorBoundary />,
-      },
-      {
-        path: 'profile',
         element: <ProfilePage />,
         errorElement: <RouteErrorBoundary />,
       },
       {
         path: 'upload',
         element: <UploadPage />,
-        errorElement: <RouteErrorBoundary />,
-      },
-      {
-        path: '@:username',
-        element: <ProfilePage />,
         errorElement: <RouteErrorBoundary />,
       },
     ],

@@ -6,6 +6,7 @@ import { throwError } from '../../utils/error-handler';
 
 interface CreateUserData {
   name: string;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -14,6 +15,7 @@ interface CreateUserData {
 interface UpdateUserData {
   userId: DatabaseUsersId;
   name?: string;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -21,6 +23,7 @@ interface UpdateUserData {
 
 interface GetUserData {
   userId?: DatabaseUsersId;
+  username?: string;
   phone?: string;
   email?: string;
   authId?: string;
@@ -40,9 +43,27 @@ const createUser = async (context: Context, data: CreateUserData): Promise<any> 
     throwError('Name is required');
   }
 
+  // Validate username if provided
+  if (data.username) {
+    const usernameValue = data.username.trim();
+    if (usernameValue.length === 0) {
+      throwError('Username cannot be empty');
+    }
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
+      throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
+    }
+    
+    // Check if username is available
+    const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
+    if (!isAvailable) {
+      throwError('Username is already taken');
+    }
+  }
+
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
+    username: data.username?.trim() || null,
     phone: data.phone || null,
     email: data.email || null,
     authId: data.authId || null,
@@ -72,6 +93,7 @@ const createUser = async (context: Context, data: CreateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -95,9 +117,28 @@ const upsertUser = async (context: Context, data: CreateUserData): Promise<any> 
   // At this point we know data.phone is defined and not empty
   const phoneValue = data.phone!.trim();
 
+  // Validate username if provided
+  if (data.username) {
+    const usernameValue = data.username.trim();
+    if (usernameValue.length === 0) {
+      throwError('Username cannot be empty');
+    }
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
+      throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
+    }
+    
+    // Check if username is available (excluding current user by phone)
+    const existingUser = await UsersPersister.getUserByPhone(context, phoneValue);
+    const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
+    if (!isAvailable && (!existingUser || existingUser.username !== usernameValue)) {
+      throwError('Username is already taken');
+    }
+  }
+
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
+    username: data.username?.trim() || null,
     phone: phoneValue,
     email: data.email || null,
     authId: data.authId || null,
@@ -116,6 +157,7 @@ const upsertUser = async (context: Context, data: CreateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -132,13 +174,33 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
   }
 
   // Prepare update data (only include non-undefined fields)
-  const updates: Partial<Pick<DatabaseUsersInitializer, 'name' | 'phone' | 'email' | 'authId'>> = {};
+  const updates: Partial<Pick<DatabaseUsersInitializer, 'name' | 'username' | 'phone' | 'email' | 'authId'>> = {};
   
   if (data.name !== undefined) {
     if (!data.name || data.name.trim().length === 0) {
       throwError('Name cannot be empty');
     }
     updates.name = data.name.trim();
+  }
+  
+  if (data.username !== undefined) {
+    if (data.username && data.username.trim().length > 0) {
+      const usernameValue = data.username.trim();
+      if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
+        throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
+      }
+      
+      // Check if username is available (excluding current user)
+      const existingUser = await UsersPersister.getUserById(context, data.userId);
+      const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
+      if (!isAvailable && (!existingUser || existingUser.username !== usernameValue)) {
+        throwError('Username is already taken');
+      }
+      
+      updates.username = usernameValue;
+    } else {
+      updates.username = null;
+    }
   }
   
   if (data.phone !== undefined) {
@@ -169,6 +231,7 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -180,21 +243,24 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
  * Get user by various identifiers
  */
 const getUser = async (context: Context, data: GetUserData): Promise<any> => {
-  if (!data.userId && !data.phone && !data.email && !data.authId) {
-    throwError('At least one identifier (userId, phone, email, or authId) is required');
+  if (!data.userId && !data.username && !data.phone && !data.email && !data.authId) {
+    throwError('At least one identifier (userId, username, phone, email, or authId) is required');
   }
 
   let user;
 
   if (data.userId) {
     user = await UsersPersister.getUserById(context, data.userId);
+  } else if (data.username) {
+    user = await UsersPersister.getUserByUsername(context, data.username);
   } else if (data.phone) {
     user = await UsersPersister.getUserByPhone(context, data.phone);
   } else if (data.authId) {
     user = await UsersPersister.getUserByAuthId(context, data.authId);
+  } else if (data.email) {
+    user = await UsersPersister.getUserByEmail(context, data.email);
   } else {
-    // For email, we would need to add this method to the persister
-    throwError('Search by email not yet implemented');
+    throwError('At least one identifier (userId, username, phone, email, or authId) is required');
   }
 
   if (!user) {
@@ -209,6 +275,7 @@ const getUser = async (context: Context, data: GetUserData): Promise<any> => {
     user: {
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -242,6 +309,7 @@ const searchUsers = async (context: Context, data: SearchUsersData): Promise<any
     users: limitedUsers.map(user => ({
       id: user.id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       email: user.email,
       authId: user.authId,
@@ -278,6 +346,30 @@ const deleteUser = async (context: Context, data: { userId: DatabaseUsersId }): 
   };
 };
 
+/**
+ * Check if a username is available
+ */
+const checkUsernameAvailability = async (context: Context, data: { username: string }): Promise<any> => {
+  if (!data.username || data.username.trim().length === 0) {
+    throwError('Username is required');
+  }
+
+  const username = data.username.trim();
+  
+  // Validate username format
+  if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+    throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
+  }
+
+  const isAvailable = await UsersPersister.isUsernameAvailable(context, username);
+
+  return {
+    success: true,
+    username: username,
+    available: isAvailable,
+  };
+};
+
 export const UserController = Controller.register({
   name: 'user',
   controllers: {
@@ -303,6 +395,10 @@ export const UserController = Controller.register({
     },
     deleteUser: {
       fn: deleteUser,
+      config: {},
+    },
+    checkUsernameAvailability: {
+      fn: checkUsernameAvailability,
       config: {},
     },
   },

@@ -1,5 +1,6 @@
 interface CreateUserRequest {
   name: string;
+  username?: string;
   email?: string;
   authId?: string;
 }
@@ -9,6 +10,7 @@ interface CreateUserResponse {
   user?: {
     id: number;
     name: string;
+    username: string | null;
     email: string | null;
     authId: string | null;
     phone: string | null;
@@ -19,6 +21,7 @@ interface CreateUserResponse {
 interface GetUserRequest {
   authId?: string;
   userId?: number;
+  username?: string;
   phone?: string;
   email?: string;
 }
@@ -28,10 +31,22 @@ interface GetUserResponse {
   user?: {
     id: number;
     name: string;
+    username: string | null;
     email: string | null;
     authId: string | null;
     phone: string | null;
   };
+  message?: string;
+}
+
+interface CheckUsernameRequest {
+  username: string;
+}
+
+interface CheckUsernameResponse {
+  success: boolean;
+  username: string;
+  available: boolean;
   message?: string;
 }
 
@@ -75,5 +90,21 @@ export const userApi = {
     const result = await response.json();
     console.log('📄 API response body:', result);
     return result;
+  },
+
+  checkUsernameAvailability: async (data: CheckUsernameRequest): Promise<CheckUsernameResponse> => {
+    const response = await fetch(`${API_BASE_URL}/users/checkUsernameAvailability`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
   },
 };

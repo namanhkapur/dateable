@@ -2,11 +2,13 @@ import { useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { supabase } from '@/features/auth/api/auth';
 import { Button } from '@/components/ui/button';
+import { useSessionData } from '@/features/auth/hooks/useSessionData';
 
 export function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { supabaseUser, clearSession } = useAuth();
+  const { username } = useSessionData();
   const isLoginPage = location.pathname === '/';
 
   const handleSignOut = async () => {
@@ -26,7 +28,7 @@ export function MainLayout() {
           <div className="mr-4 flex">
             <button 
               className="mr-6 flex items-center space-x-2" 
-              onClick={() => navigate(supabaseUser ? '/home' : '/')}
+              onClick={() => navigate(supabaseUser && username ? `/profile/${username}` : '/')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
@@ -37,12 +39,14 @@ export function MainLayout() {
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <nav className="flex items-center space-x-4">
-              <button 
-                onClick={() => navigate('/home/profile')}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
-                My Profile
-              </button>
+              {supabaseUser && username && (
+                <button 
+                  onClick={() => navigate(`/profile/${username}`)}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                >
+                  My Profile
+                </button>
+              )}
             </nav>
             {!isLoginPage && (
               <div className="w-full flex-1 md:w-auto md:flex-none">

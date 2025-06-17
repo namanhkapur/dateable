@@ -92,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // First, try to find user by authId
       let response = await userApi.getUser({ authId: supabaseUser.id });
       console.log('📡 Server user response (by authId):', response);
+      console.log('📡 AuthId response success:', response.success, 'user:', response.user);
       
       // If not found by authId, try by email
       if (!response.success || !response.user) {
@@ -99,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (supabaseUser.email) {
           response = await userApi.getUser({ email: supabaseUser.email });
           console.log('📡 Server user response (by email):', response);
+          console.log('📡 Email response success:', response.success, 'user:', response.user);
         }
       }
       

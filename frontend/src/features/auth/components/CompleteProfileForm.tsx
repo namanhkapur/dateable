@@ -15,10 +15,54 @@ export function CompleteProfileForm({
   ...props
 }: React.ComponentProps<"div">) {
   const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
+  const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [checkingUsername, setCheckingUsername] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const { refreshUser } = useAuth()
+
+  const checkUsernameAvailability = async (usernameValue: string) => {
+    if (!usernameValue || usernameValue.length < 3) {
+      setUsernameError(null)
+      return
+    }
+
+    setCheckingUsername(true)
+    setUsernameError(null)
+
+    try {
+      const response = await userApi.checkUsernameAvailability({ username: usernameValue })
+      if (response.success) {
+        if (!response.available) {
+          setUsernameError('Username is already taken')
+        }
+      } else {
+        setUsernameError(response.message || 'Error checking username')
+      }
+    } catch (err) {
+      console.error('Error checking username:', err)
+      setUsernameError('Error checking username availability')
+    } finally {
+      setCheckingUsername(false)
+    }
+  }
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+    setUsername(value)
+    
+    // Debounce username availability check
+    if (value.length >= 3) {
+      const timeoutId = setTimeout(() => {
+        checkUsernameAvailability(value)
+      }, 500)
+      return () => clearTimeout(timeoutId)
+    } else {
+      setUsernameError(null)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +72,25 @@ export function CompleteProfileForm({
     // Validate name
     if (!name || name.trim().length === 0) {
       setError('Please enter your name')
+      setLoading(false)
+      return
+    }
+
+    // Validate username
+    if (!username || username.trim().length === 0) {
+      setError('Please enter a username')
+      setLoading(false)
+      return
+    }
+
+    if (username.length < 3 || username.length > 20) {
+      setError('Username must be 3-20 characters')
+      setLoading(false)
+      return
+    }
+
+    if (usernameError) {
+      setError('Please fix username issues before continuing')
       setLoading(false)
       return
     }
@@ -44,6 +107,7 @@ export function CompleteProfileForm({
       try {
         const response = await userApi.createUser({
           name: name.trim(),
+          username: username.trim(),
           email: session.user.email || undefined,
           authId: session.user.id
         })
@@ -75,8 +139,8 @@ export function CompleteProfileForm({
       // Refresh the user data in AuthContext
       await refreshUser()
 
-      // Navigate to home
-      navigate('/home', { replace: true })
+      // Navigate to the user's profile page
+      navigate(`/profile/${username.trim()}`, { replace: true })
     } catch (err) {
       console.error('Error:', err)
       if (err instanceof Error) {
@@ -99,7 +163,7 @@ export function CompleteProfileForm({
             </div>
             <h1 className="text-xl font-bold">Complete your profile</h1>
             <p className="text-center text-sm text-muted-foreground">
-              Please provide your name to continue
+              Please provide your name and choose a username
             </p>
           </div>
           <div className="flex flex-col gap-6">
@@ -113,6 +177,30 @@ export function CompleteProfileForm({
                 onChange={(e) => setName(e.target.value)}
                 required
               />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="john_doe"
+                value={username}
+                onChange={handleUsernameChange}
+                required
+                className={usernameError ? "border-red-500" : ""}
+              />
+              {checkingUsername && (
+                <p className="text-xs text-muted-foreground">Checking availability...</p>
+              )}
+              {usernameError && (
+                <p className="text-xs text-red-500">{usernameError}</p>
+              )}
+              {username.length >= 3 && !usernameError && !checkingUsername && (
+                <p className="text-xs text-green-600">Username is available!</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                3-20 characters, letters, numbers, underscores, and hyphens only
+              </p>
             </div>
             {error && (
               <p className="text-sm text-red-500">{error}</p>

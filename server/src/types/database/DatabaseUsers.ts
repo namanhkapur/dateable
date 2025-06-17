@@ -31,6 +31,13 @@ by the application. */
 
   name: string;
 
+  /**
+   * Unique username for profile routing (3-20 chars, alphanumeric, _, -)
+   * Index: idx_users_username
+   * Index: users_username_key
+   */
+  username: string | null;
+
   /** Index: users_phone_key */
   phone: string | null;
 
@@ -81,6 +88,13 @@ by the application.
 // last_modified?: ZonedDateTime;
 
   name: string;
+
+  /**
+   * Unique username for profile routing (3-20 chars, alphanumeric, _, -)
+   * Index: idx_users_username
+   * Index: users_username_key
+   */
+  username?: string | null;
 
   /** Index: users_phone_key */
   phone?: string | null;
