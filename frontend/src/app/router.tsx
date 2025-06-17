@@ -1,10 +1,11 @@
 import { createHashRouter, Navigate, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ProfilePage } from '@/features/profile/components/ProfilePage';
+import { LoginForm } from '@/features/auth/components/LoginForm';
 import { LandingPage } from '@/features/landing/components/LandingPage';
+import { UploadPage } from '@/features/profile/components/UploadPage';
 import { supabase } from '../features/auth/api/auth';
 import React from 'react';
-import { LoginForm } from '@/features/auth/components/LoginForm';
 import SignupRoute from './routes/signup';
 import CompleteProfileRoute from './routes/complete-profile';
 
@@ -214,6 +215,18 @@ export const router = createHashRouter([
             <ProfilePage />
           </ProtectedRoute>
         ),
+      },
+      {
+        path: 'upload',
+        element: (
+          <ProtectedRoute>
+            <UploadPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '@:username',
+        element: <ProfilePage />,
       },
     ],
   },

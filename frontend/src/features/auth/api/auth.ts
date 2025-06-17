@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { LoginCredentials, AuthError } from '../types';
+import type { LoginCredentials } from '../types';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;

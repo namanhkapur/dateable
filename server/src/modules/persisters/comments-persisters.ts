@@ -16,12 +16,10 @@ export class CommentsModel extends BaseModel {
 const getCommentById = async (
   context: Context,
   id: DatabaseCommentsId,
-): Promise<DatabaseComments | undefined> => {
-  return await context.databaseService
+): Promise<DatabaseComments | undefined> => context.databaseService
     .query(CommentsModel)
     .where({ id })
     .first();
-};
 
 /**
  * Get comments by profile draft ID, ordered by creation time.
@@ -29,12 +27,10 @@ const getCommentById = async (
 const getCommentsByProfileDraftId = async (
   context: Context,
   profileDraftId: DatabaseProfileDraftsId,
-): Promise<DatabaseComments[]> => {
-  return await context.databaseService
+): Promise<DatabaseComments[]> => context.databaseService
     .query(CommentsModel)
     .where({ profileDraftId })
     .orderBy('id');
-};
 
 /**
  * Get comments by author ID.
@@ -42,12 +38,10 @@ const getCommentsByProfileDraftId = async (
 const getCommentsByAuthorId = async (
   context: Context,
   authorId: DatabaseUsersId,
-): Promise<DatabaseComments[]> => {
-  return await context.databaseService
+): Promise<DatabaseComments[]> => context.databaseService
     .query(CommentsModel)
     .where({ authorId })
     .orderBy('id', 'desc');
-};
 
 /**
  * Get comments by type.
@@ -56,12 +50,10 @@ const getCommentsByType = async (
   context: Context,
   profileDraftId: DatabaseProfileDraftsId,
   type: string,
-): Promise<DatabaseComments[]> => {
-  return await context.databaseService
+): Promise<DatabaseComments[]> => context.databaseService
     .query(CommentsModel)
     .where({ profileDraftId, type })
     .orderBy('id');
-};
 
 /**
  * Get system comments for a profile draft.
@@ -69,9 +61,7 @@ const getCommentsByType = async (
 const getSystemCommentsByProfileDraftId = async (
   context: Context,
   profileDraftId: DatabaseProfileDraftsId,
-): Promise<DatabaseComments[]> => {
-  return await getCommentsByType(context, profileDraftId, 'system');
-};
+): Promise<DatabaseComments[]> => getCommentsByType(context, profileDraftId, 'system');
 
 /**
  * Get user comments for a profile draft.
@@ -79,9 +69,7 @@ const getSystemCommentsByProfileDraftId = async (
 const getUserCommentsByProfileDraftId = async (
   context: Context,
   profileDraftId: DatabaseProfileDraftsId,
-): Promise<DatabaseComments[]> => {
-  return await getCommentsByType(context, profileDraftId, 'user');
-};
+): Promise<DatabaseComments[]> => getCommentsByType(context, profileDraftId, 'user');
 
 /**
  * Create a new comment.
@@ -89,13 +77,11 @@ const getUserCommentsByProfileDraftId = async (
 const createComment = async (
   context: Context,
   comment: DatabaseCommentsInitializer,
-): Promise<DatabaseComments> => {
-  return await context.databaseService
+): Promise<DatabaseComments> => context.databaseService
     .query(CommentsModel)
     .insert(comment)
     .returning('*')
     .first();
-};
 
 /**
  * Create a user comment.
@@ -106,15 +92,13 @@ const createUserComment = async (
   authorId: DatabaseUsersId,
   message: string,
   metadata?: unknown,
-): Promise<DatabaseComments> => {
-  return await createComment(context, {
+): Promise<DatabaseComments> => createComment(context, {
     profileDraftId,
     authorId,
     type: 'user',
     message,
     metadata,
   });
-};
 
 /**
  * Create a system comment.
@@ -124,15 +108,13 @@ const createSystemComment = async (
   profileDraftId: DatabaseProfileDraftsId,
   message: string,
   metadata?: unknown,
-): Promise<DatabaseComments> => {
-  return await createComment(context, {
+): Promise<DatabaseComments> => createComment(context, {
     profileDraftId,
     authorId: null,
     type: 'system',
     message,
     metadata,
   });
-};
 
 /**
  * Update a comment by ID.
@@ -141,15 +123,13 @@ const updateComment = async (
   context: Context,
   id: DatabaseCommentsId,
   updates: Partial<Pick<DatabaseComments, 'message' | 'metadata'>>,
-): Promise<DatabaseComments> => {
-  return await context.databaseService
+): Promise<DatabaseComments> => context.databaseService
     .query(CommentsModel)
     .where({ id })
     .update(updates)
     .throwIfNotFound()
     .returning('*')
     .first();
-};
 
 /**
  * Delete a comment by ID.
@@ -171,12 +151,10 @@ const deleteComment = async (
 const deleteCommentsByProfileDraftId = async (
   context: Context,
   profileDraftId: DatabaseProfileDraftsId,
-): Promise<number> => {
-  return await context.databaseService
+): Promise<number> => context.databaseService
     .query(CommentsModel)
     .where({ profileDraftId })
     .delete();
-};
 
 export const CommentsPersister = {
   getCommentById,

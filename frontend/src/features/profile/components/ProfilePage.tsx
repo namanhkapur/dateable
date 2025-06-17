@@ -5,6 +5,7 @@ import { ProfileCard } from '@/features/profile/components/ProfileCard';
 import { MediaLibraryDialog } from '@/features/profile/components/MediaLibraryDialog';
 import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibraryDialog';
 import { ProfileViewModal } from '@/features/profile/components/ProfileViewModal';
+import { HingeProfileModal } from './HingeProfileModal';
 
 // Pastel/neutral Tailwind color classes
 const pastelColors = [
@@ -22,16 +23,10 @@ const pastelColors = [
   'bg-fuchsia-100',
 ];
 
-function getColorById(id: string) {
-  // Simple hash to pick a color based on id
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return pastelColors[Math.abs(hash) % pastelColors.length];
-}
-
-type ProfileType = 'all' | 'romantic' | 'roast' | 'bestie' | 'flirty';
+const getColorById = (id: string) => {
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return pastelColors[hash % pastelColors.length];
+};
 
 // Mock data for demonstration (with dummy photos and prompts)
 const mockProfiles = [
@@ -143,7 +138,8 @@ const mockProfiles = [
 
 export function ProfilePage() {
   const { username } = useParams();
-  const [activeFilter, setActiveFilter] = useState<ProfileType>('all');
+  const isOwner = username === '@me'; // This will be replaced with actual auth logic
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [isOwner, setIsOwner] = useState(false);
@@ -165,25 +161,21 @@ export function ProfilePage() {
     }
   }, [username, navigate]);
 
-  const filters: ProfileType[] = ['all', 'romantic', 'roast', 'bestie', 'flirty'];
-
-  // For now, we'll use an empty array since we're not storing profiles in session storage
-  const profiles: any[] = [];
-
-  const filteredProfiles = activeFilter === 'all' 
-    ? profiles 
-    : profiles.filter(profile => profile.type === activeFilter);
-
-  // Get display name for the profile being viewed
-  const displayName = isOwner ? userName : (username?.replace('@', '') || 'User');
+  // Show all profiles without filtering
+  const filteredProfiles = mockProfiles;
 
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold">
-          {isOwner ? `Welcome back, ${userName}!` : `${displayName}'s Dateable`}
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-xl">
+            <span>😊</span>
+          </div>
+          <h1 className="text-2xl font-bold">
+            {isOwner ? 'Welcome back, Namanh!' : `Viewing ${username}'s Dateable`}
+          </h1>
+        </div>
         <p className="text-muted-foreground">
           {isOwner
             ? 'Create your first profile'
@@ -191,43 +183,28 @@ export function ProfilePage() {
         </p>
       </div>
 
-      {/* Filter Tabs and Action Buttons Row */}
-      <div className="flex items-center justify-between pb-2">
-        {/* Filter Tabs */}
-        <div className="flex space-x-2 overflow-x-auto">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`rounded-full px-4 py-2 text-sm font-medium capitalize transition-colors
-                ${
-                  activeFilter === filter
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted hover:bg-muted/80'
-                }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-        {/* Action Buttons */}
-        {!isOwner && (
-          <div className="flex gap-2 ml-4">
-            <MediaLibraryDialog username={displayName} />
-            <PromptsLibraryDialog username={displayName} />
+      {/* Action Buttons Row */}
+      {!isOwner && (
+        <div className="flex justify-end pb-2">
+          <div className="flex gap-2">
+            <MediaLibraryDialog username={username || 'user'} />
+            <PromptsLibraryDialog username={username || 'user'} />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Profile Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Create Card */}
-        <button className="flex h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 hover:border-primary">
-          <div className="text-center">
-            <div className="text-4xl">+</div>
-            <p className="mt-2 text-sm text-muted-foreground">Create Profile</p>
+        {/* Create Card for non-owners */}
+        {!isOwner && (
+          <div
+            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-[#7c2e9a] transition-colors"
+            onClick={() => setShowProfileModal(true)}
+          >
+            <span className="text-4xl mb-2">+</span>
+            <span className="font-semibold">Create Profile</span>
           </div>
-        </button>
+        )}
 
         {/* Profile Cards */}
         {filteredProfiles.map((profile) => (
@@ -242,14 +219,12 @@ export function ProfilePage() {
         ))}
       </div>
 
-      {/* Profile View Modal */}
-      {openProfileId && (
-        <ProfileViewModal
-          isOwner={isOwner}
-          profile={profiles.find(p => p.id === openProfileId)}
-          onClose={() => setOpenProfileId(null)}
-        />
-      )}
+      {/* Hinge-Style Profile Modal */}
+      <HingeProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        profileName="Namanh"
+      />
     </div>
   );
-} 
+}

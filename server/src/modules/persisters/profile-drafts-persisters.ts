@@ -15,12 +15,10 @@ export class ProfileDraftsModel extends BaseModel {
 const getProfileDraftById = async (
   context: Context,
   id: DatabaseProfileDraftsId,
-): Promise<DatabaseProfileDrafts | undefined> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts | undefined> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ id })
     .first();
-};
 
 /**
  * Get profile drafts by subject user ID.
@@ -28,12 +26,10 @@ const getProfileDraftById = async (
 const getProfileDraftsBySubjectUserId = async (
   context: Context,
   subjectUserId: DatabaseUsersId,
-): Promise<DatabaseProfileDrafts[]> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts[]> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ subjectUserId })
     .orderBy('id', 'desc');
-};
 
 /**
  * Get profile drafts created by a specific user.
@@ -41,12 +37,10 @@ const getProfileDraftsBySubjectUserId = async (
 const getProfileDraftsByCreatedByUserId = async (
   context: Context,
   createdByUserId: DatabaseUsersId,
-): Promise<DatabaseProfileDrafts[]> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts[]> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ createdByUserId })
     .orderBy('id', 'desc');
-};
 
 /**
  * Get finalized profile drafts for a subject user.
@@ -54,12 +48,10 @@ const getProfileDraftsByCreatedByUserId = async (
 const getFinalizedProfileDraftsBySubjectUserId = async (
   context: Context,
   subjectUserId: DatabaseUsersId,
-): Promise<DatabaseProfileDrafts[]> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts[]> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ subjectUserId, isFinalized: true })
     .orderBy('id', 'desc');
-};
 
 /**
  * Get draft (non-finalized) profile drafts for a subject user.
@@ -67,12 +59,10 @@ const getFinalizedProfileDraftsBySubjectUserId = async (
 const getDraftProfileDraftsBySubjectUserId = async (
   context: Context,
   subjectUserId: DatabaseUsersId,
-): Promise<DatabaseProfileDrafts[]> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts[]> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ subjectUserId, isFinalized: false })
     .orderBy('id', 'desc');
-};
 
 /**
  * Create a new profile draft.
@@ -80,13 +70,11 @@ const getDraftProfileDraftsBySubjectUserId = async (
 const createProfileDraft = async (
   context: Context,
   profileDraft: DatabaseProfileDraftsInitializer,
-): Promise<DatabaseProfileDrafts> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts> => context.databaseService
     .query(ProfileDraftsModel)
     .insert(profileDraft)
     .returning('*')
     .first();
-};
 
 /**
  * Update a profile draft by ID.
@@ -95,15 +83,13 @@ const updateProfileDraft = async (
   context: Context,
   id: DatabaseProfileDraftsId,
   updates: Partial<Pick<DatabaseProfileDrafts, 'isFinalized'>>,
-): Promise<DatabaseProfileDrafts> => {
-  return await context.databaseService
+): Promise<DatabaseProfileDrafts> => context.databaseService
     .query(ProfileDraftsModel)
     .where({ id })
     .update(updates)
     .throwIfNotFound()
     .returning('*')
     .first();
-};
 
 /**
  * Finalize a profile draft.
@@ -111,9 +97,7 @@ const updateProfileDraft = async (
 const finalizeProfileDraft = async (
   context: Context,
   id: DatabaseProfileDraftsId,
-): Promise<DatabaseProfileDrafts | undefined> => {
-  return await updateProfileDraft(context, id, { isFinalized: true });
-};
+): Promise<DatabaseProfileDrafts | undefined> => updateProfileDraft(context, id, { isFinalized: true });
 
 /**
  * Delete a profile draft by ID.

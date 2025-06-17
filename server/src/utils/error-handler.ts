@@ -17,7 +17,7 @@ export const errorToPlainObject = (error: any) => {
   return obj;
 };
 
-let lastSentTime: number | undefined;
+let _lastSentTime: number | undefined;
 
 /**
  * Standardizes how we log errors so that the error is formated in a useful way

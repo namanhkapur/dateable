@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -17,23 +17,45 @@ const AlternativesPanel = ({
   selectedProfile: any;
   onSelectAlternative: (alt: any) => void;
 }) => {
-  if (!isOpen || !editingAsset) return null;
+  const panelRef = React.useRef<HTMLDivElement>(null);
 
-  const currentAsset = selectedProfile.assets[editingAsset.index];
+  // Close panel when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  // Always render the panel but keep it hidden when closed to prevent animation glitch
+  const currentAsset = editingAsset ? selectedProfile.assets[editingAsset.index] : null;
+  
+  if (!isOpen || !editingAsset || !currentAsset) {
+    return (
+      <div 
+        className="fixed top-16 bottom-0 right-0 left-1/2 bg-white shadow-lg z-40 transform translate-x-full"
+        style={{ pointerEvents: 'none' }}
+      />
+    );
+  }
   
   return (
-    <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out"
-         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}>
-      <div className="p-4 border-b flex justify-between items-center">
-        <h3 className="text-lg font-medium">
-          {editingAsset.type === 'photo' ? 'Change Photo' : 'Change Prompt'}
-        </h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full">
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-      
-      <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
+    <div 
+      ref={panelRef}
+      className={`fixed top-16 bottom-0 right-0 left-1/2 bg-white shadow-lg z-40 transform transition-all duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="p-4 overflow-y-auto h-full">
         {editingAsset.type === 'photo' ? (
           <div className="grid grid-cols-2 gap-4">
             {[
@@ -58,28 +80,36 @@ const AlternativesPanel = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {currentAsset?.alternatives?.map((alt: any) => (
+            {[
+              // Current selection first
+              {
+                ...currentAsset,
+                id: 'current-selection',
+                isCurrent: true
+              },
+              // Then the rest of the alternatives
+              ...(currentAsset?.alternatives?.filter((alt: any) => 
+                alt.answer !== currentAsset.answer || alt.question !== currentAsset.question
+              ) || [])
+            ].map((alt: any) => (
               <div 
                 key={alt.id}
-                className="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => onSelectAlternative(alt)}
+                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  alt.isCurrent 
+                    ? 'border-2 border-primary bg-primary/5' 
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => !alt.isCurrent && onSelectAlternative(alt)}
               >
-                <h4 className="font-medium text-gray-900 mb-1">{alt.question}</h4>
+                <h4 className="font-medium text-gray-900 mb-1">
+                  {alt.question}
+                  {alt.isCurrent && (
+                    <span className="ml-2 text-xs text-primary">Current selection</span>
+                  )}
+                </h4>
                 <p className="text-gray-600">{alt.answer}</p>
               </div>
             ))}
-            
-            {currentAsset?.type === 'text' && (
-              <div className="p-4 border-2 border-primary rounded-lg bg-primary/5">
-                <h4 className="font-medium text-gray-900 mb-1">
-                  {currentAsset.question}
-                </h4>
-                <p className="text-gray-600">
-                  {currentAsset.answer}
-                </p>
-                <div className="mt-2 text-xs text-primary">Current selection</div>
-              </div>
-            )}
           </div>
         )}
       </div>

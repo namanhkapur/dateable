@@ -49,20 +49,19 @@ const mapMimeTypeToAssetType = (mimeType: string): string => {
 /**
  * Upload a single file to S3 and save asset record to database
  */
+ 
 const uploadFile = async (context: Context, data: FileUploadData, req: RequestWithFiles): Promise<any> => {
   const files = req.files;
   
   if (!files || files.length === 0) {
     throwError('No file provided');
-    return; // This will never be reached due to throwError
   }
 
-  if (files.length > 1) {
+  if (files!.length > 1) {
     throwError('Only one file upload supported per request');
-    return; // This will never be reached due to throwError
   }
 
-  const file = files[0];
+  const file = files![0];
   
   // Validate file size (e.g., max 10MB)
   const maxSizeBytes = 10 * 1024 * 1024;
@@ -76,6 +75,11 @@ const uploadFile = async (context: Context, data: FileUploadData, req: RequestWi
     'image/png',
     'image/gif',
     'image/webp',
+    'video/mp4',
+    'video/mpeg',
+    'video/quicktime',
+    'video/x-msvideo', // .avi
+    'video/x-ms-wmv',  // .wmv
     'application/pdf',
     'text/plain',
   ];
@@ -84,7 +88,100 @@ const uploadFile = async (context: Context, data: FileUploadData, req: RequestWi
     throwError(`File type ${file.mimetype} not allowed`);
   }
 
-  try {
+  // Upload to S3
+  const s3Result = await s3Service.uploadFile({
+    buffer: file.buffer,
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    folder: 'user-uploads',
+  });
+
+  // Save asset record to database
+  const asset = await AssetsPersister.upsertAsset(context, {
+    url: s3Result.url,
+    type: data.type || mapMimeTypeToAssetType(file.mimetype),
+    caption: data.caption || null,
+    uploadedBy: data.userId || null,
+  });
+
+  context.logger.info('File uploaded successfully', {
+    assetId: asset.id,
+    url: s3Result.url,
+    originalName: file.originalname,
+    size: file.size,
+  });
+
+  return {
+    success: true,
+    asset: {
+      id: asset.id,
+      url: asset.url,
+      type: asset.type,
+      caption: asset.caption,
+      uploadedBy: asset.uploadedBy,
+    },
+    metadata: {
+      originalName: file.originalname,
+      size: file.size,
+      mimeType: file.mimetype,
+    },
+  };
+};
+
+/**
+ * Upload multiple files to S3 and save asset records to database
+ */
+ 
+const uploadMultipleFiles = async (context: Context, data: FileUploadData, req: RequestWithFiles): Promise<any> => {
+  const files = req.files;
+  
+  if (!files || files.length === 0) {
+    throwError('No files provided');
+  }
+
+  if (files!.length > 10) {
+    throwError('Maximum 10 files allowed per request');
+  }
+
+  const results = [];
+  const errors = [];
+
+  for (const file of files!) {
+    // Validate file size (e.g., max 10MB)
+    const maxSizeBytes = 10 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      errors.push({
+        file: file.originalname,
+        error: 'File size exceeds maximum allowed size of 10MB',
+      });
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    // Validate file type
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'video/mp4',
+      'video/mpeg',
+      'video/quicktime',
+      'video/x-msvideo', // .avi
+      'video/x-ms-wmv',  // .wmv
+      'application/pdf',
+      'text/plain',
+    ];
+    
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      errors.push({
+        file: file.originalname,
+        error: `File type ${file.mimetype} not allowed`,
+      });
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
     // Upload to S3
     const s3Result = await s3Service.uploadFile({
       buffer: file.buffer,
@@ -101,14 +198,7 @@ const uploadFile = async (context: Context, data: FileUploadData, req: RequestWi
       uploadedBy: data.userId || null,
     });
 
-    context.logger.info('File uploaded successfully', {
-      assetId: asset.id,
-      url: s3Result.url,
-      originalName: file.originalname,
-      size: file.size,
-    });
-
-    return {
+    results.push({
       success: true,
       asset: {
         id: asset.id,
@@ -122,118 +212,22 @@ const uploadFile = async (context: Context, data: FileUploadData, req: RequestWi
         size: file.size,
         mimeType: file.mimetype,
       },
-    };
-  } catch (error) {
-    context.logger.error('File upload failed', { error: error });
-    throwError('File upload failed');
-  }
-};
+    });
 
-/**
- * Upload multiple files to S3 and save asset records to database
- */
-const uploadMultipleFiles = async (context: Context, data: FileUploadData, req: RequestWithFiles): Promise<any> => {
-  const files = req.files;
-  
-  if (!files || files.length === 0) {
-    throwError('No files provided');
-    return; // This will never be reached due to throwError
-  }
-
-  if (files.length > 10) {
-    throwError('Maximum 10 files allowed per request');
-    return; // This will never be reached due to throwError
-  }
-
-  const results = [];
-  const errors = [];
-
-  for (const file of files) {
-    try {
-      // Validate file size (e.g., max 10MB)
-      const maxSizeBytes = 10 * 1024 * 1024;
-      if (file.size > maxSizeBytes) {
-        errors.push({
-          file: file.originalname,
-          error: 'File size exceeds maximum allowed size of 10MB',
-        });
-        continue;
-      }
-
-      // Validate file type
-      const allowedMimeTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'application/pdf',
-        'text/plain',
-      ];
-      
-      if (!allowedMimeTypes.includes(file.mimetype)) {
-        errors.push({
-          file: file.originalname,
-          error: `File type ${file.mimetype} not allowed`,
-        });
-        continue;
-      }
-
-      // Upload to S3
-      const s3Result = await s3Service.uploadFile({
-        buffer: file.buffer,
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        folder: 'user-uploads',
-      });
-
-      // Save asset record to database
-      const asset = await AssetsPersister.upsertAsset(context, {
-        url: s3Result.url,
-        type: data.type || mapMimeTypeToAssetType(file.mimetype),
-        caption: data.caption || null,
-        uploadedBy: data.userId || null,
-      });
-
-      results.push({
-        success: true,
-        asset: {
-          id: asset.id,
-          url: asset.url,
-          type: asset.type,
-          caption: asset.caption,
-          uploadedBy: asset.uploadedBy,
-        },
-        metadata: {
-          originalName: file.originalname,
-          size: file.size,
-          mimeType: file.mimetype,
-        },
-      });
-
-      context.logger.info('File uploaded successfully', {
-        assetId: asset.id,
-        url: s3Result.url,
-        originalName: file.originalname,
-        size: file.size,
-      });
-    } catch (error) {
-      context.logger.error('File upload failed for file', { 
-        file: file.originalname,
-        error: error 
-      });
-      errors.push({
-        file: file.originalname,
-        error: 'Upload failed',
-      });
-    }
+    context.logger.info('File uploaded successfully', {
+      assetId: asset.id,
+      url: s3Result.url,
+      originalName: file.originalname,
+      size: file.size,
+    });
   }
 
   return {
     success: errors.length === 0,
     uploaded: results,
-    errors: errors,
+    errors,
     summary: {
-      total: files.length,
+      total: files!.length,
       successful: results.length,
       failed: errors.length,
     },
@@ -302,6 +296,7 @@ const getAllAssets = async (context: Context) => {
 /**
  * Generate a presigned URL for an asset
  */
+ 
 const getPresignedUrl = async (context: Context, data: { assetId: DatabaseAssetsId }): Promise<any> => {
   const asset = await AssetsPersister.getAssetById(context, data.assetId);
   
@@ -314,27 +309,19 @@ const getPresignedUrl = async (context: Context, data: { assetId: DatabaseAssets
     throwError('Invalid asset URL format');
   }
 
-  try {
-    const presignedUrl = await s3Service.getPresignedDownloadUrl(key!);
-    
-    return {
-      success: true,
-      data: {
-        presignedUrl,
-        asset: {
-          id: asset.id,
-          type: asset.type,
-          url: asset.url,
-        },
+  const presignedUrl = await s3Service.getPresignedDownloadUrl(key!);
+  
+  return {
+    success: true,
+    data: {
+      presignedUrl,
+      asset: {
+        id: asset.id,
+        type: asset.type,
+        url: asset.url,
       },
-    };
-  } catch (error) {
-    context.logger.error('Failed to generate presigned URL', { 
-      assetId: data.assetId,
-      error: error 
-    });
-    throwError('Failed to generate presigned URL');
-  }
+    },
+  };
 };
 
 export const FileUploadController = Controller.register({

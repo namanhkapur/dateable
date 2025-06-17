@@ -14,15 +14,13 @@ export class UsersModel extends BaseModel {
 const upsertUser = async (
   context: Context,
   user: DatabaseUsersInitializer,
-): Promise<DatabaseUsers> => {
-  return await context.databaseService
+): Promise<DatabaseUsers> => context.databaseService
     .query(UsersModel)
     .insert(user)
     .onConflict('phone')
     .merge()
     .returning('*')
     .first();
-};
 
 /**
  * Get a user by their phone number.
@@ -30,12 +28,10 @@ const upsertUser = async (
 const getUserByPhone = async (
   context: Context,
   phone: string,
-): Promise<DatabaseUsers | undefined> => {
-  return await context.databaseService
+): Promise<DatabaseUsers | undefined> => context.databaseService
     .query(UsersModel)
     .where({ phone })
     .first();
-};
 
 /**
  * Get a user by their ID.
@@ -43,12 +39,10 @@ const getUserByPhone = async (
 const getUserById = async (
   context: Context,
   id: DatabaseUsersId,
-): Promise<DatabaseUsers | undefined> => {
-  return await context.databaseService
+): Promise<DatabaseUsers | undefined> => context.databaseService
     .query(UsersModel)
     .where({ id })
     .first();
-};
 
 /**
  * Create a new user.
@@ -56,13 +50,11 @@ const getUserById = async (
 const createUser = async (
   context: Context,
   user: DatabaseUsersInitializer,
-): Promise<DatabaseUsers> => {
-  return await context.databaseService
+): Promise<DatabaseUsers> => context.databaseService
     .query(UsersModel)
     .insert(user)
     .returning('*')
     .first();
-};
 
 /**
  * Update a user by ID.
@@ -71,15 +63,13 @@ const updateUser = async (
   context: Context,
   id: DatabaseUsersId,
   updates: Partial<Pick<DatabaseUsers, 'name' | 'phone'>>,
-): Promise<DatabaseUsers> => {
-  return await context.databaseService
+): Promise<DatabaseUsers> => context.databaseService
     .query(UsersModel)
     .where({ id })
     .update(updates)
     .throwIfNotFound()
     .returning('*')
     .first();
-};
 
 /**
  * Delete a user by ID.
@@ -101,12 +91,10 @@ const deleteUser = async (
 const getUsersByNamePattern = async (
   context: Context,
   namePattern: string,
-): Promise<DatabaseUsers[]> => {
-  return context.databaseService
+): Promise<DatabaseUsers[]> => context.databaseService
     .query(UsersModel)
     .where('name', 'ilike', `%${namePattern}%`)
     .orderBy('name');
-};
 
 export const UsersPersister = {
   upsertUser,

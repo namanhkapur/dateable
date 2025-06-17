@@ -3,13 +3,13 @@ import { useAuth } from '../hooks/useAuth';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
-  const { signInWithMagicLink, isLoading, error } = useAuth();
+  const { signInWithMagicLink, loading, error } = useAuth();
   const [isEmailSent, setIsEmailSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await signInWithMagicLink(email);
-    if (success) {
+    await signInWithMagicLink(email);
+    if (!error) {
       setIsEmailSent(true);
     }
   };
@@ -52,10 +52,10 @@ export function LoginPage() {
           )}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={loading}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            {isLoading ? 'Sending...' : 'Send Magic Link'}
+            {loading ? 'Sending...' : 'Send Magic Link'}
           </button>
         </form>
       </div>

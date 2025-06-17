@@ -18,6 +18,14 @@ export function MainLayout() {
             </a>
           </div>
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+            <nav className="flex items-center space-x-4">
+              <a 
+                href="/profile"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                My Profile
+              </a>
+            </nav>
             {!isLoginPage && (
               <div className="w-full flex-1 md:w-auto md:flex-none">
                 <a 
@@ -28,9 +36,6 @@ export function MainLayout() {
                 </a>
               </div>
             )}
-            <nav className="flex items-center space-x-2">
-              {/* Add avatar and notification icons here */}
-            </nav>
           </div>
         </div>
       </header>

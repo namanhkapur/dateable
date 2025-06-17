@@ -79,7 +79,7 @@ class S3Service {
       Key: key,
     });
 
-    return await getSignedUrl(this.s3Client, command, { expiresIn });
+    return getSignedUrl(this.s3Client, command, { expiresIn });
   }
 
   /**
@@ -92,7 +92,7 @@ class S3Service {
       ContentType: contentType,
     });
 
-    return await getSignedUrl(this.s3Client, command, { expiresIn });
+    return getSignedUrl(this.s3Client, command, { expiresIn });
   }
 
   /**
