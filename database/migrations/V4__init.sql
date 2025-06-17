@@ -19,7 +19,6 @@ COMMENT ON COLUMN users.username IS 'Unique username for profile routing (3-20 c
 -- Add indexes for faster lookups
 CREATE INDEX idx_users_auth_id ON users(auth_id);
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
 
 -- ASSETS
 CREATE TABLE assets (

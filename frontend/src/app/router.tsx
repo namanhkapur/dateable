@@ -22,8 +22,14 @@ const AuthCallback = () => {
       try {
         // Handle the auth callback by extracting tokens from URL
         const hash = window.location.hash;
-        const tokenPart = hash.split('#')[2];
-
+        
+        // Supabase URLs look like: #/auth/callback#access_token=...&refresh_token=...
+        // We need to extract the part after the second #
+        const hashParts = hash.split('#');
+        
+        // Find the part that contains access_token
+        const tokenPart = hashParts.find(part => part.includes('access_token='));
+        
         if (!tokenPart) {
           console.error('No token part found in hash');
           navigate('/', { replace: true });

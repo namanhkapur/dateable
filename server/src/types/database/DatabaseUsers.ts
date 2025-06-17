@@ -33,7 +33,6 @@ by the application. */
 
   /**
    * Unique username for profile routing (3-20 chars, alphanumeric, _, -)
-   * Index: idx_users_username
    * Index: users_username_key
    */
   username: string | null;
@@ -91,7 +90,6 @@ by the application.
 
   /**
    * Unique username for profile routing (3-20 chars, alphanumeric, _, -)
-   * Index: idx_users_username
    * Index: users_username_key
    */
   username?: string | null;

@@ -87,36 +87,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    console.log('🔍 Fetching server user from API for authId:', supabaseUser.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔍 Fetching server user from API');
+    }
+    
     try {
       // First, try to find user by authId
       let response = await userApi.getUser({ authId: supabaseUser.id });
-      console.log('📡 Server user response (by authId):', response);
-      console.log('📡 AuthId response success:', response.success, 'user:', response.user);
       
       // If not found by authId, try by email
       if (!response.success || !response.user) {
-        console.log('🔄 AuthId lookup failed, trying email lookup...');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔄 AuthId lookup failed, trying email lookup...');
+        }
         if (supabaseUser.email) {
           response = await userApi.getUser({ email: supabaseUser.email });
-          console.log('📡 Server user response (by email):', response);
-          console.log('📡 Email response success:', response.success, 'user:', response.user);
         }
       }
       
       if (response.success && response.user) {
-        console.log('✅ Server user found:', response.user);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✅ Server user found');
+        }
         setServerUser(response.user);
         setIsNewUser(false);
         saveSessionData(response.user, false);
       } else {
-        console.log('❌ Server user not found by authId or email, marking as new user');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('❌ Server user not found, marking as new user');
+        }
         setServerUser(null);
         setIsNewUser(true);
         saveSessionData(null, true);
       }
     } catch (err) {
-      console.error('💥 Error fetching server user:', err);
+      console.error('Error fetching server user:', err);
       setServerUser(null);
       setIsNewUser(true);
       saveSessionData(null, true);
@@ -130,7 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    console.log('🚀 AuthContext initializing...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🚀 AuthContext initializing...');
+    }
     
     // Clean up legacy sessionStorage keys (one-time cleanup)
     sessionStorage.removeItem('userName');
@@ -140,28 +147,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // First, try to load cached session data
     const { user: cachedUser, isNew: cachedIsNew } = loadSessionData();
     if (cachedUser) {
-      console.log('📦 Loading cached session data');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📦 Loading cached session data');
+      }
       setServerUser(cachedUser);
       setIsNewUser(cachedIsNew);
     }
 
     // Get initial Supabase session
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      console.log('📋 Initial session check:', { session: !!session, error: !!error });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📋 Initial session check:', { hasSession: !!session, hasError: !!error });
+      }
       if (error) {
-        console.error('❌ Session error:', error);
+        console.error('Session error:', error);
         setError(error);
         clearSession();
         setLoading(false);
       } else if (session?.user) {
-        console.log('👤 Found Supabase user:', session.user.id);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('👤 Found Supabase user');
+        }
         setSupabaseUser(session.user);
         // Fetch server user (will use cache if available and fresh)
         await fetchServerUser(session.user);
-        console.log('✅ Initial auth check complete, setting loading to false');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✅ Initial auth check complete');
+        }
         setLoading(false);
       } else {
-        console.log('🚫 No session found');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🚫 No session found');
+        }
         setSupabaseUser(null);
         clearSession();
         setLoading(false);
@@ -170,18 +187,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('🔄 Auth state changed:', _event, { session: !!session });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔄 Auth state changed:', _event, { hasSession: !!session });
+      }
       if (session?.user) {
-        console.log('👤 Auth state: user logged in:', session.user.id);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('👤 Auth state: user logged in');
+        }
         setSupabaseUser(session.user);
         // For auth changes, we want fresh data (user might have completed profile)
         await fetchServerUser(session.user, true);
       } else {
-        console.log('🚫 Auth state: user logged out');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🚫 Auth state: user logged out');
+        }
         setSupabaseUser(null);
         clearSession();
       }
-      console.log('✅ Auth state change complete, setting loading to false');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Auth state change complete');
+      }
       setLoading(false);
     });
 

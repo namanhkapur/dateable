@@ -236,8 +236,8 @@ export function ProfilePage() {
       {!isOwner && (
         <div className="flex justify-end pb-2">
           <div className="flex gap-2">
-            <MediaLibraryDialog username={profileUser.name} />
-            <PromptsLibraryDialog username={profileUser.name} />
+            <MediaLibraryDialog username={profileUser.username} />
+            <PromptsLibraryDialog username={profileUser.username} />
           </div>
         </div>
       )}

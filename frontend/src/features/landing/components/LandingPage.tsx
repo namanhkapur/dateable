@@ -242,7 +242,7 @@ const sampleProfile: Profile = {
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const { supabaseUser, serverUser } = useAuth();
+  const { supabaseUser, serverUser, loading } = useAuth();
   const [selectedProfile, setSelectedProfile] = useState<Profile>(sampleProfile);
   const [editingAsset, setEditingAsset] = useState<{ type: 'photo' | 'text'; index: number } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -252,9 +252,14 @@ export function LandingPage() {
   }, []);
 
   const handleCreateProfile = () => {
-    if (supabaseUser && serverUser) {
-      // User is authenticated, redirect to their profile
-      if (serverUser.username) {
+    // Don't do anything while auth is still loading
+    if (loading) {
+      return;
+    }
+    
+    if (supabaseUser && serverUser !== undefined) {
+      // User is authenticated and we have profile data
+      if (serverUser && serverUser.username) {
         navigate(`/profile/${serverUser.username}`);
       } else {
         // User doesn't have username yet, redirect to complete profile
@@ -287,30 +292,32 @@ export function LandingPage() {
     console.log('Alternative selected:', alternative);
     if (!editingAsset) return;
     
-    const updatedAssets = [...selectedProfile.assets];
-    const assetIndex = updatedAssets.findIndex(
-      (asset, idx) => asset.type === editingAsset.type && idx === editingAsset.index
-    );
-    
-    if (assetIndex !== -1) {
-      if (editingAsset.type === 'photo') {
-        updatedAssets[assetIndex] = { 
-          ...updatedAssets[assetIndex], 
-          url: alternative 
-        };
-      } else {
-        updatedAssets[assetIndex] = {
-          ...updatedAssets[assetIndex],
-          question: alternative.question,
-          answer: alternative.answer
-        };
+    setSelectedProfile(prev => {
+      const updatedAssets = [...prev.assets];
+      const assetIndex = updatedAssets.findIndex(
+        (asset, idx) => asset.type === editingAsset.type && idx === editingAsset.index
+      );
+      
+      if (assetIndex !== -1) {
+        if (editingAsset.type === 'photo') {
+          updatedAssets[assetIndex] = { 
+            ...updatedAssets[assetIndex], 
+            url: alternative 
+          };
+        } else {
+          updatedAssets[assetIndex] = {
+            ...updatedAssets[assetIndex],
+            question: alternative.question,
+            answer: alternative.answer
+          };
+        }
       }
       
-      setSelectedProfile({
-        ...selectedProfile,
+      return {
+        ...prev,
         assets: updatedAssets,
-      });
-    }
+      };
+    });
     
     handleClosePanel();
   };
@@ -335,8 +342,15 @@ export function LandingPage() {
                   Create a Hinge profile for your friend 👫 so they can put their best 👞 forward. <span className="bg-yellow-100 px-1.5 py-0.5 rounded font-medium">We know, that mirror selfie has to go.</span>
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button size="lg" onClick={handleCreateProfile}>
-                    Create a Profile
+                  <Button size="lg" onClick={handleCreateProfile} disabled={loading}>
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Loading...
+                      </div>
+                    ) : (
+                      "Create a Profile"
+                    )}
                   </Button>
                   <Button 
                     variant="outline" 

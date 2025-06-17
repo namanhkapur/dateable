@@ -1,5 +1,5 @@
 import { GalleryVerticalEnd } from "lucide-react"
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
@@ -22,6 +22,7 @@ export function CompleteProfileForm({
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const { refreshUser } = useAuth()
+  const checkUsernameChangeDebounce = useRef<number>()
 
   const checkUsernameAvailability = async (usernameValue: string) => {
     if (!usernameValue || usernameValue.length < 3) {
@@ -54,14 +55,14 @@ export function CompleteProfileForm({
     setUsername(value)
     
     // Debounce username availability check
-    if (value.length >= 3) {
-      const timeoutId = setTimeout(() => {
-        checkUsernameAvailability(value)
-      }, 500)
-      return () => clearTimeout(timeoutId)
-    } else {
-      setUsernameError(null)
+    if (value.length < 3) {
+      setUsernameError(null);
+      return;
     }
+    clearTimeout(checkUsernameChangeDebounce.current);
+    checkUsernameChangeDebounce.current = window.setTimeout(() => {
+      checkUsernameAvailability(value);
+    }, 500);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,16 +117,22 @@ export function CompleteProfileForm({
           throw new Error(response.message || 'Failed to create user')
         }
         
-        console.log('User created successfully:', response.user)
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('User created successfully');
+        }
       } catch (createError) {
         // If creation fails due to existing email, try to find the existing user
         if (createError.message?.includes('duplicate key') || createError.message?.includes('email')) {
-          console.log('User already exists, trying to fetch existing user...')
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('User already exists, trying to fetch existing user...');
+          }
           
           // Try to find existing user by email
           const existingUserResponse = await userApi.getUser({ email: session.user.email });
           if (existingUserResponse.success && existingUserResponse.user) {
-            console.log('Found existing user:', existingUserResponse.user)
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Found existing user');
+            }
             // User exists, just continue to refresh
           } else {
             // Couldn't find or create user, re-throw the original error

@@ -43,25 +43,22 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({
   if (!requireAuth && supabaseUser) {
     // If user is authenticated but needs to complete profile
     if (isNewUser || !serverUser) {
-      console.log('🔀 RouteGuard: Redirecting to complete profile');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔀 RouteGuard: Redirecting to complete profile');
+      }
       return <Navigate to="/complete-profile" replace />;
     }
     
-    // If user is authenticated and has a profile, redirect to their profile
-    if (serverUser && serverUser.username) {
-      console.log('🔀 RouteGuard: Redirecting authenticated user to profile:', serverUser.username);
+    // If user is authenticated and has a profile WITH username, redirect to their profile
+    if (serverUser?.username) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔀 RouteGuard: Redirecting authenticated user to profile');
+      }
       return <Navigate to={`/profile/${serverUser.username}`} replace />;
     }
-  }
-  
-  // Debug logging for public routes
-  if (!requireAuth) {
-    console.log('🔍 RouteGuard: Public route check:', {
-      supabaseUser: !!supabaseUser,
-      serverUser: !!serverUser,
-      username: serverUser?.username,
-      isNewUser
-    });
+
+    // Fallback: profile exists but username missing
+    return <Navigate to="/complete-profile" replace />;
   }
 
   return <>{children}</>;

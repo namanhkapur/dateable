@@ -115,7 +115,7 @@ const getUserByUsername = async (
   username: string,
 ): Promise<DatabaseUsers | undefined> => context.databaseService
     .query(UsersModel)
-    .where({ username })
+    .whereRaw('lower(username) = ?', username.toLowerCase())
     .first();
 
 /**
@@ -127,7 +127,7 @@ const isUsernameAvailable = async (
 ): Promise<boolean> => {
   const user = await context.databaseService
     .query(UsersModel)
-    .where({ username })
+    .whereRaw('lower(username) = ?', username.toLowerCase())
     .first();
   return !user;
 };

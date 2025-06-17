@@ -3,6 +3,7 @@ import { Controller } from '../../utils/controller';
 import { UsersPersister } from '../persisters/user-persisters';
 import { DatabaseUsersId, DatabaseUsersInitializer } from '../../types/database/DatabaseUsers';
 import { throwError } from '../../utils/error-handler';
+import { UsernameValidator } from '../../utils/username-validator';
 
 interface CreateUserData {
   name: string;
@@ -44,26 +45,15 @@ const createUser = async (context: Context, data: CreateUserData): Promise<any> 
   }
 
   // Validate username if provided
+  let validatedUsername: string | null = null;
   if (data.username) {
-    const usernameValue = data.username.trim();
-    if (usernameValue.length === 0) {
-      throwError('Username cannot be empty');
-    }
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
-      throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-    }
-    
-    // Check if username is available
-    const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
-    if (!isAvailable) {
-      throwError('Username is already taken');
-    }
+    validatedUsername = await UsernameValidator.validateAndAssertUsername(context, data.username);
   }
 
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
-    username: data.username?.trim() || null,
+    username: validatedUsername,
     phone: data.phone || null,
     email: data.email || null,
     authId: data.authId || null,
@@ -118,27 +108,21 @@ const upsertUser = async (context: Context, data: CreateUserData): Promise<any> 
   const phoneValue = data.phone!.trim();
 
   // Validate username if provided
+  let validatedUsername: string | null = null;
   if (data.username) {
-    const usernameValue = data.username.trim();
-    if (usernameValue.length === 0) {
-      throwError('Username cannot be empty');
-    }
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
-      throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-    }
-    
-    // Check if username is available (excluding current user by phone)
+    // For upsert, we need to exclude the current user (if exists) from availability check
     const existingUser = await UsersPersister.getUserByPhone(context, phoneValue);
-    const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
-    if (!isAvailable && (!existingUser || existingUser.username !== usernameValue)) {
-      throwError('Username is already taken');
-    }
+    validatedUsername = await UsernameValidator.validateAndAssertUsername(
+      context,
+      data.username,
+      existingUser?.id
+    );
   }
 
   // Prepare user data for database
   const userData: DatabaseUsersInitializer = {
     name: data.name.trim(),
-    username: data.username?.trim() || null,
+    username: validatedUsername,
     phone: phoneValue,
     email: data.email || null,
     authId: data.authId || null,
@@ -185,19 +169,12 @@ const updateUser = async (context: Context, data: UpdateUserData): Promise<any> 
   
   if (data.username !== undefined) {
     if (data.username && data.username.trim().length > 0) {
-      const usernameValue = data.username.trim();
-      if (!/^[a-zA-Z0-9_-]{3,20}$/.test(usernameValue)) {
-        throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-      }
-      
-      // Check if username is available (excluding current user)
-      const existingUser = await UsersPersister.getUserById(context, data.userId);
-      const isAvailable = await UsersPersister.isUsernameAvailable(context, usernameValue);
-      if (!isAvailable && (!existingUser || existingUser.username !== usernameValue)) {
-        throwError('Username is already taken');
-      }
-      
-      updates.username = usernameValue;
+      // For updates, exclude the current user from availability check
+      updates.username = await UsernameValidator.validateAndAssertUsername(
+        context,
+        data.username,
+        data.userId
+      );
     } else {
       updates.username = null;
     }
@@ -354,18 +331,13 @@ const checkUsernameAvailability = async (context: Context, data: { username: str
     throwError('Username is required');
   }
 
-  const username = data.username.trim();
-  
-  // Validate username format
-  if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-    throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-  }
-
-  const isAvailable = await UsersPersister.isUsernameAvailable(context, username);
+  // Validate format only (don't throw on availability)
+  const normalizedUsername = UsernameValidator.validateUsernameFormat(data.username);
+  const isAvailable = await UsersPersister.isUsernameAvailable(context, normalizedUsername);
 
   return {
     success: true,
-    username: username,
+    username: normalizedUsername,
     available: isAvailable,
   };
 };
