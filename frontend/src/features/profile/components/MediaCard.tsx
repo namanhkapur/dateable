@@ -1,12 +1,19 @@
 import { useState } from 'react';
 
-interface Asset {
+export type MediaType = 'photo' | 'video';
+
+export interface Asset {
   id: string;
-  type: string;
-  url?: string;
+  type: MediaType;
+  url: string;
+  preview?: string; // For backward compatibility
   question?: string;
   answer?: string;
   answers?: string[];
+  // Additional properties for the photo editor
+  prompt?: string;
+  caption?: string;
+  location?: string;
 }
 
 export function MediaCard({ asset }: { asset: Asset }) {
