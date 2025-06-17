@@ -69,6 +69,7 @@ make start-production   # Start production containers
 - Middleware in `src/middleware/`
 - Request validation using AJV schemas
 - Do not use try-catch unless specifically for 3rd party requests.
+- All API requests use POST, there is no GET / DELETE etc.
 
 ### Job Scheduling
 - **pg-boss** for job queue management

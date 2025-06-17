@@ -3,7 +3,6 @@ import { BaseModel } from '../../database/base-model';
 import DatabaseProfileElements, { DatabaseProfileElementsInitializer, DatabaseProfileElementsId } from '../../types/database/DatabaseProfileElements';
 import { DatabaseProfileDraftsId } from '../../types/database/DatabaseProfileDrafts';
 import { DatabaseAssetsId } from '../../types/database/DatabaseAssets';
-import { DatabasePromptsId } from '../../types/database/DatabasePrompts';
 
 export interface ProfileElementsModel extends DatabaseProfileElements {}
 
@@ -71,23 +70,12 @@ const getProfileElementsByAssetId = async (
     .orderBy('id');
 
 /**
- * Get profile elements that reference a specific prompt.
- */
-const getProfileElementsByPromptId = async (
-  context: Context,
-  promptId: DatabasePromptsId,
-): Promise<DatabaseProfileElements[]> => context.databaseService
-    .query(ProfileElementsModel)
-    .where({ promptId })
-    .orderBy('id');
-
-/**
  * Update a profile element by ID.
  */
 const updateProfileElement = async (
   context: Context,
   id: DatabaseProfileElementsId,
-  updates: Partial<Pick<DatabaseProfileElements, 'position' | 'type' | 'assetId' | 'promptId' | 'textResponse' | 'subResponses'>>,
+  updates: Partial<Pick<DatabaseProfileElements, 'position' | 'type' | 'assetId' | 'prompt' | 'textResponse' | 'subResponses'>>,
 ): Promise<DatabaseProfileElements> => context.databaseService
     .query(ProfileElementsModel)
     .where({ id })
@@ -136,7 +124,6 @@ export const ProfileElementsPersister = {
   getProfileElementsByProfileDraftId,
   getProfileElementsByType,
   getProfileElementsByAssetId,
-  getProfileElementsByPromptId,
   updateProfileElement,
   updateProfileElementPosition,
   deleteProfileElement,

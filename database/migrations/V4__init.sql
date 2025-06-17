@@ -27,12 +27,6 @@ CREATE TABLE assets (
   caption TEXT
 );
 
--- PROMPTS
-CREATE TABLE prompts (
-  LIKE template.base_table INCLUDING ALL,
-  title TEXT UNIQUE NOT NULL,
-  type TEXT CHECK (type IN ('text', 'voice', 'multi'))
-);
 
 -- PROFILE DRAFTS
 CREATE TABLE profile_drafts (
@@ -47,9 +41,12 @@ CREATE TABLE profile_elements (
   LIKE template.base_table INCLUDING ALL,
   profile_draft_id BIGINT REFERENCES profile_drafts(id) ON DELETE CASCADE,
   position INT NOT NULL,
-  type TEXT CHECK (type IN ('photo', 'video', 'prompt_text', 'prompt_voice', 'two_truths_lie')),
+  type TEXT CHECK (type IN ('photo', 'video', 'prompt_text', 'prompt_voice')),
   asset_id BIGINT REFERENCES assets(id),
-  prompt_id BIGINT REFERENCES prompts(id),
+  prompt TEXT CHECK (
+    (type IN ('prompt_text', 'prompt_voice') AND prompt IS NOT NULL) OR
+    (type NOT IN ('prompt_text', 'prompt_voice') AND prompt IS NULL)
+  ),
   text_response TEXT,
   sub_responses JSONB,
   UNIQUE(profile_draft_id, position)

@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import expressListRoutes from 'express-list-routes';
 import { router as example } from '../modules/example/example-route';
+import { router as prompts } from '../modules/prompts/prompts-route';
 import { router as uploads } from '../modules/uploads/file-upload-routes';
 import { router as users } from '../modules/users/user-route';
 import { router as index } from './routes';
@@ -11,6 +12,7 @@ export const buildApi = () => {
   const app = Router();
   app.use(index);
   app.use('/example', example);
+  app.use('/prompts', prompts);
   app.use('/uploads', uploads);
   app.use('/users', users);
 

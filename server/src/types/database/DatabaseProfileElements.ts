@@ -3,7 +3,6 @@
 
 import { DatabaseProfileDraftsId } from './DatabaseProfileDrafts';
 import { DatabaseAssetsId } from './DatabaseAssets';
-import { DatabasePromptsId } from './DatabasePrompts';
 import { ZonedDateTime } from '@js-joda/core';
 
 export type DatabaseProfileElementsId = number & { " __flavor": 'profile_elements' };
@@ -42,7 +41,7 @@ by the application. */
 
   assetId: DatabaseAssetsId | null;
 
-  promptId: DatabasePromptsId | null;
+  prompt: string | null;
 
   textResponse: string | null;
 
@@ -90,7 +89,7 @@ by the application.
 
   assetId?: DatabaseAssetsId | null;
 
-  promptId?: DatabasePromptsId | null;
+  prompt?: string | null;
 
   textResponse?: string | null;
 

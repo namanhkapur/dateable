@@ -5,7 +5,6 @@ import DatabaseAssets, { DatabaseAssetsInitializer, DatabaseAssetsId } from './D
 import DatabaseComments, { DatabaseCommentsInitializer, DatabaseCommentsId } from './DatabaseComments';
 import DatabaseProfileDrafts, { DatabaseProfileDraftsInitializer, DatabaseProfileDraftsId } from './DatabaseProfileDrafts';
 import DatabaseProfileElements, { DatabaseProfileElementsInitializer, DatabaseProfileElementsId } from './DatabaseProfileElements';
-import DatabasePrompts, { DatabasePromptsInitializer, DatabasePromptsId } from './DatabasePrompts';
 import DatabaseUsers, { DatabaseUsersInitializer, DatabaseUsersId } from './DatabaseUsers';
 
 type Model =
@@ -13,7 +12,6 @@ type Model =
   | DatabaseComments
   | DatabaseProfileDrafts
   | DatabaseProfileElements
-  | DatabasePrompts
   | DatabaseUsers
 
 interface ModelTypeMap {
@@ -21,7 +19,6 @@ interface ModelTypeMap {
   'comments': DatabaseComments;
   'profile_drafts': DatabaseProfileDrafts;
   'profile_elements': DatabaseProfileElements;
-  'prompts': DatabasePrompts;
   'users': DatabaseUsers;
 }
 
@@ -30,7 +27,6 @@ type ModelId =
   | DatabaseCommentsId
   | DatabaseProfileDraftsId
   | DatabaseProfileElementsId
-  | DatabasePromptsId
   | DatabaseUsersId
 
 interface ModelIdTypeMap {
@@ -38,7 +34,6 @@ interface ModelIdTypeMap {
   'comments': DatabaseCommentsId;
   'profile_drafts': DatabaseProfileDraftsId;
   'profile_elements': DatabaseProfileElementsId;
-  'prompts': DatabasePromptsId;
   'users': DatabaseUsersId;
 }
 
@@ -47,7 +42,6 @@ type Initializer =
   | DatabaseCommentsInitializer
   | DatabaseProfileDraftsInitializer
   | DatabaseProfileElementsInitializer
-  | DatabasePromptsInitializer
   | DatabaseUsersInitializer
 
 interface InitializerTypeMap {
@@ -55,7 +49,6 @@ interface InitializerTypeMap {
   'comments': DatabaseCommentsInitializer;
   'profile_drafts': DatabaseProfileDraftsInitializer;
   'profile_elements': DatabaseProfileElementsInitializer;
-  'prompts': DatabasePromptsInitializer;
   'users': DatabaseUsersInitializer;
 }
 
@@ -64,7 +57,6 @@ export type {
   DatabaseComments, DatabaseCommentsInitializer, DatabaseCommentsId,
   DatabaseProfileDrafts, DatabaseProfileDraftsInitializer, DatabaseProfileDraftsId,
   DatabaseProfileElements, DatabaseProfileElementsInitializer, DatabaseProfileElementsId,
-  DatabasePrompts, DatabasePromptsInitializer, DatabasePromptsId,
   DatabaseUsers, DatabaseUsersInitializer, DatabaseUsersId,
 
   Model,
