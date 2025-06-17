@@ -8,6 +8,7 @@ import { ProfileViewModal } from '@/features/profile/components/ProfileViewModal
 import { HingeProfileModal } from './HingeProfileModal';
 import { useSessionData } from '@/features/auth/hooks/useSessionData';
 import { userApi } from '@/features/auth/api/user';
+import { PhotoUploadDialog } from '@/components/PhotoUpload';
 
 // Pastel/neutral Tailwind color classes
 const pastelColors = [
@@ -149,6 +150,11 @@ export function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  const handleUploadComplete = () => {
+    // Refresh page or update state as needed after upload
+    console.log('Upload completed successfully');
+  };
+
   useEffect(() => {
     const fetchProfileUser = async () => {
       if (!username) {
@@ -233,27 +239,41 @@ export function ProfilePage() {
       </div>
 
       {/* Action Buttons Row */}
-      {!isOwner && (
-        <div className="flex justify-end pb-2">
-          <div className="flex gap-2">
-            <MediaLibraryDialog username={profileUser.username} />
-            <PromptsLibraryDialog username={profileUser.username} />
-          </div>
+      <div className="flex justify-end pb-2">
+        <div className="flex gap-2">
+          {isOwner ? (
+            // Owner buttons: Upload photos and manage media/prompts
+            <>
+              <PhotoUploadDialog onUploadComplete={handleUploadComplete}>
+                <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                  Upload Photos
+                </button>
+              </PhotoUploadDialog>
+              <MediaLibraryDialog username={profileUser.username} />
+              <PromptsLibraryDialog username={profileUser.username} />
+            </>
+          ) : (
+            // Non-owner buttons: Help create profiles for friend
+            <>
+              <MediaLibraryDialog username={profileUser.username} />
+              <PromptsLibraryDialog username={profileUser.username} />
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Profile Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Create Card for non-owners */}
-        {!isOwner && (
-          <div
-            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-[#7c2e9a] transition-colors"
-            onClick={() => setShowProfileModal(true)}
-          >
-            <span className="text-4xl mb-2">+</span>
-            <span className="font-semibold">Create Profile</span>
-          </div>
-        )}
+        {/* Create Card - available for everyone */}
+        <div
+          className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center hover:border-[#7c2e9a] transition-colors"
+          onClick={() => setShowProfileModal(true)}
+        >
+          <span className="text-4xl mb-2">+</span>
+          <span className="font-semibold">
+            {isOwner ? 'Create Your Profile' : 'Create Profile'}
+          </span>
+        </div>
 
         {/* Profile Cards */}
         {filteredProfiles.map((profile) => (
