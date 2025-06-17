@@ -11,11 +11,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const authApi = {
-  signInWithMagicLink: async (email: string) => {
+  signInWithMagicLink: async (email: string, metadata?: { data: any }) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/#/auth/callback`,
+        data: metadata?.data,
       },
     });
     if (error) throw error;

@@ -60,7 +60,7 @@ export function SignupForm({
               Already have an account?{" "}
               <button
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/")}
                 className="underline underline-offset-4"
               >
                 Login

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { supabase } from '@/features/auth/api/auth';
+import { useSessionData } from '@/features/auth/hooks/useSessionData';
 
 const AlternativesPanel = ({
   isOpen,
@@ -243,23 +243,9 @@ const sampleProfile: Profile = {
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { userName } = useSessionData();
   const [editingAsset, setEditingAsset] = useState<{ type: 'photo' | 'text'; index: number } | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [userName, setUserName] = useState<string>('');
-  
-  useEffect(() => {
-    // Get user info from session storage
-    const userId = sessionStorage.getItem('userId');
-    const userEmail = sessionStorage.getItem('userEmail');
-    const storedUserName = sessionStorage.getItem('userName');
-
-    if (userId && userEmail && storedUserName) {
-      setUserName(storedUserName);
-    } else {
-      // If any user info is missing, redirect to login
-      navigate('/login', { replace: true });
-    }
-  }, [navigate]);
 
   const handleAssetClick = (type: 'photo' | 'text', index: number) => {
     console.log('Asset clicked:', { type, index });
@@ -282,6 +268,7 @@ export function LandingPage() {
     handleClosePanel();
   };
 
+
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white w-full overflow-hidden">
       {/* Main content area, centered under nav (assume nav is h-16 = 64px) */}
@@ -300,13 +287,13 @@ export function LandingPage() {
                   Create a Hinge profile for your friend 👫 so they can put their best 👞 forward. <span className="bg-yellow-100 px-1.5 py-0.5 rounded font-medium">We know, that mirror selfie has to go.</span>
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button size="lg" onClick={() => navigate('/profile')}>
+                  <Button size="lg" onClick={() => navigate('/home/profile')}>
                     Create a Profile
                   </Button>
                   <Button 
                     variant="outline" 
                     size="lg" 
-                    onClick={() => navigate('/profile')}
+                    onClick={() => navigate('/home/profile')}
                   >
                     Browse Profiles
                   </Button>

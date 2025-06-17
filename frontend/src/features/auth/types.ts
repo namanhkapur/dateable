@@ -10,4 +10,12 @@ export interface AuthError {
 export interface AuthState {
   loading: boolean;
   error: AuthError | null;
+}
+
+export interface ServerUser {
+  id: number;
+  name: string;
+  email: string | null;
+  authId: string | null;
+  phone: string | null;
 } 

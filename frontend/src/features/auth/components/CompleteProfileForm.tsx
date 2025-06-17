@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "../api/auth"
+import { userApi } from "../api/user"
+import { useAuth } from "../context/AuthContext"
 
 export function CompleteProfileForm({
   className,
@@ -16,6 +18,7 @@ export function CompleteProfileForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const { refreshUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,19 +40,43 @@ export function CompleteProfileForm({
         throw new Error('No active session')
       }
 
-      // Store all user info in session storage
-      sessionStorage.setItem('userId', session.user.id)
-      sessionStorage.setItem('userEmail', session.user.email)
-      sessionStorage.setItem('userName', name.trim())
+      // Try to create user on the server
+      try {
+        const response = await userApi.createUser({
+          name: name.trim(),
+          email: session.user.email || undefined,
+          authId: session.user.id
+        })
 
-      console.log('Profile created for user:', {
-        auth_id: session.user.id,
-        name: name.trim(),
-        email: session.user.email
-      })
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to create user')
+        }
+        
+        console.log('User created successfully:', response.user)
+      } catch (createError) {
+        // If creation fails due to existing email, try to find the existing user
+        if (createError.message?.includes('duplicate key') || createError.message?.includes('email')) {
+          console.log('User already exists, trying to fetch existing user...')
+          
+          // Try to find existing user by email
+          const existingUserResponse = await userApi.getUser({ email: session.user.email });
+          if (existingUserResponse.success && existingUserResponse.user) {
+            console.log('Found existing user:', existingUserResponse.user)
+            // User exists, just continue to refresh
+          } else {
+            // Couldn't find or create user, re-throw the original error
+            throw createError;
+          }
+        } else {
+          throw createError;
+        }
+      }
+
+      // Refresh the user data in AuthContext
+      await refreshUser()
 
       // Navigate to home
-      navigate('/', { replace: true })
+      navigate('/home', { replace: true })
     } catch (err) {
       console.error('Error:', err)
       if (err instanceof Error) {
