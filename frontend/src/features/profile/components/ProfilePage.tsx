@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../../lib/supabase';
 import { ProfileCard } from '@/features/profile/components/ProfileCard';
 import { MediaLibraryDialog } from '@/features/profile/components/MediaLibraryDialog';
 import { PromptsLibraryDialog } from '@/features/profile/components/PromptsLibraryDialog';
@@ -143,25 +144,49 @@ const mockProfiles = [
 export function ProfilePage() {
   const { username } = useParams();
   const [activeFilter, setActiveFilter] = useState<ProfileType>('all');
-  const isOwner = username === '@me'; // This will be replaced with actual auth logic
   const [openProfileId, setOpenProfileId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>('');
+  const [isOwner, setIsOwner] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get user info from session storage
+    const userId = sessionStorage.getItem('userId');
+    const userEmail = sessionStorage.getItem('userEmail');
+    const storedUserName = sessionStorage.getItem('userName');
+
+    if (userId && userEmail && storedUserName) {
+      setUserName(storedUserName);
+      // Check if this is the user's own profile
+      setIsOwner(username === '@me');
+    } else {
+      // If any user info is missing, redirect to login
+      navigate('/login', { replace: true });
+    }
+  }, [username, navigate]);
 
   const filters: ProfileType[] = ['all', 'romantic', 'roast', 'bestie', 'flirty'];
 
+  // For now, we'll use an empty array since we're not storing profiles in session storage
+  const profiles: any[] = [];
+
   const filteredProfiles = activeFilter === 'all' 
-    ? mockProfiles 
-    : mockProfiles.filter(profile => profile.type === activeFilter);
+    ? profiles 
+    : profiles.filter(profile => profile.type === activeFilter);
+
+  // Get display name for the profile being viewed
+  const displayName = isOwner ? userName : (username?.replace('@', '') || 'User');
 
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="space-y-1">
         <h1 className="text-2xl font-bold">
-          {isOwner ? 'Welcome back, Namanh!' : `Viewing ${username}'s Dateable`}
+          {isOwner ? `Welcome back, ${userName}!` : `${displayName}'s Dateable`}
         </h1>
         <p className="text-muted-foreground">
           {isOwner
-            ? 'You have 5 profiles and 3 invites waiting'
+            ? 'Create your first profile'
             : 'Create a profile for your friend'}
         </p>
       </div>
@@ -188,25 +213,23 @@ export function ProfilePage() {
         {/* Action Buttons */}
         {!isOwner && (
           <div className="flex gap-2 ml-4">
-            <MediaLibraryDialog username={username || 'user'} />
-            <PromptsLibraryDialog username={username || 'user'} />
+            <MediaLibraryDialog username={displayName} />
+            <PromptsLibraryDialog username={displayName} />
           </div>
         )}
       </div>
 
       {/* Profile Cards Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Create Card for non-owners */}
-        {!isOwner && (
-          <button className="flex h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 hover:border-primary">
-            <div className="text-center">
-              <div className="text-4xl">+</div>
-              <p className="mt-2 text-sm text-muted-foreground">Create Profile</p>
-            </div>
-          </button>
-        )}
+        {/* Create Card */}
+        <button className="flex h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 hover:border-primary">
+          <div className="text-center">
+            <div className="text-4xl">+</div>
+            <p className="mt-2 text-sm text-muted-foreground">Create Profile</p>
+          </div>
+        </button>
 
-        {/* Mock Profile Cards */}
+        {/* Profile Cards */}
         {filteredProfiles.map((profile) => (
           <ProfileCard
             key={profile.id}
@@ -217,15 +240,16 @@ export function ProfilePage() {
             onClick={() => setOpenProfileId(profile.id)}
           />
         ))}
-        {/* Profile View Modal (Hinge-style) */}
-        {openProfileId && (
-          <ProfileViewModal
-            isOwner={false}
-            profile={mockProfiles.find(p => p.id === openProfileId)}
-            onClose={() => setOpenProfileId(null)}
-          />
-        )}
       </div>
+
+      {/* Profile View Modal */}
+      {openProfileId && (
+        <ProfileViewModal
+          isOwner={isOwner}
+          profile={profiles.find(p => p.id === openProfileId)}
+          onClose={() => setOpenProfileId(null)}
+        />
+      )}
     </div>
   );
 } 

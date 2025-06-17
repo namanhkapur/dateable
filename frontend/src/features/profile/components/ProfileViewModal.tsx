@@ -1,10 +1,38 @@
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Remove mockProfile, use profile prop instead
 
 export function ProfileViewModal({ isOwner = false, profile, onClose }: { isOwner?: boolean, profile: any, onClose: () => void }) {
-  if (!profile) return null;
+  const [userName, setUserName] = useState<string>('');
+
+  useEffect(() => {
+    // Get user name from session storage
+    const storedUserName = sessionStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
+
+  if (!profile) {
+    return (
+      <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-xl w-full p-0 bg-muted">
+          <div className="flex items-center justify-between px-6 pt-6 pb-2">
+            <DialogTitle className="text-2xl font-bold">Create Your First Profile</DialogTitle>
+          </div>
+          <div className="overflow-y-auto max-h-[80vh] px-6 pb-6">
+            <div className="flex flex-col gap-4">
+              <div className="text-center py-8">
+                <p className="text-lg mb-4">Welcome, {userName}!</p>
+                <p className="text-muted-foreground">Start by creating your first profile. You can add photos, prompts, and more.</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   // Organize assets to ensure media starts and ends the sequence
   const organizeAssets = (assets: any[]) => {
