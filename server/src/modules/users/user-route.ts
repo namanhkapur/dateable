@@ -1,7 +1,6 @@
 import express from 'express';
 import { addPublicRoute } from '../../web/routes/router-helpers';
 import { UserController } from './user-controller';
-import { DatabaseUsersId } from '../../types/database/DatabaseUsers';
 
 export const router = express.Router();
 

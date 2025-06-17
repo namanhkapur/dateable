@@ -68,6 +68,7 @@ make start-production   # Start production containers
 - Route modules in `src/modules/*/` directories
 - Middleware in `src/middleware/`
 - Request validation using AJV schemas
+- Do not use try-catch unless specifically for 3rd party requests.
 
 ### Job Scheduling
 - **pg-boss** for job queue management

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,8 @@ function cn(...classes: (string | boolean | undefined | null)[]) {
 
 export function MediaLibraryDialog({ username }: { username: string }) {
   const [open, setOpen] = useState(false);
-  const [media, setMedia] = useState<MediaItem[]>(initialMockMedia);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
   const [preview, setPreview] = useState<MediaItem | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [tab, setTab] = useState<'all' | 'photo' | 'video' | 'upload'>('all');
@@ -146,6 +147,52 @@ export function MediaLibraryDialog({ username }: { username: string }) {
       fileInputRef.current.value = '';
     }
   };
+
+  const fetchUserAssets = async () => {
+    setIsLoadingMedia(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/uploads/user-assets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: HARDCODED_USER_ID.toString() }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.assets) {
+        const userMedia = result.assets.map((asset: any) => ({
+          id: asset.id,
+          url: asset.url,
+          type: asset.type === 'photo' ? 'photo' as const : 'video' as const,
+          duration: asset.type === 'video' ? asset.duration : undefined,
+        }));
+        
+        setMedia(userMedia);
+      } else {
+        setMedia([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user assets:', error);
+      showMessage('Failed to load user assets', 'error');
+      setMedia([]);
+    } finally {
+      setIsLoadingMedia(false);
+    }
+  };
+
+  // Load user assets when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchUserAssets();
+    }
+  }, [open]);
 
   const uploadFiles = async () => {
     if (selectedFiles.length === 0) {
@@ -362,29 +409,40 @@ export function MediaLibraryDialog({ username }: { username: string }) {
           {tab !== 'upload' && (
             <TabsContent value={tab} className="flex-1">
               <div className="grid grid-cols-3 gap-4 p-4 overflow-y-auto h-[45vh] items-stretch">
-                {filtered.map(mediaItem => (
-                  <MediaCard
-                    key={mediaItem.id}
-                    media={mediaItem}
-                    hovered={hoveredId === mediaItem.id}
-                    setHovered={setHoveredId}
-                    onClick={() => setPreview(mediaItem)}
-                  />
-                ))}
-                {filtered.length === 0 && (
+                {isLoadingMedia ? (
                   <div className="col-span-3 flex items-center justify-center h-40 text-muted-foreground">
                     <div className="text-center">
-                      <div className="text-2xl mb-2">📁</div>
-                      <p>No {tab === 'all' ? 'media' : tab + 's'} found</p>
-                      <Button 
-                        variant="outline" 
-                        className="mt-2"
-                        onClick={() => setTab('upload')}
-                      >
-                        Upload Files
-                      </Button>
+                      <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-2"></div>
+                      <p>Loading your media...</p>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    {filtered.map(mediaItem => (
+                      <MediaCard
+                        key={mediaItem.id}
+                        media={mediaItem}
+                        hovered={hoveredId === mediaItem.id}
+                        setHovered={setHoveredId}
+                        onClick={() => setPreview(mediaItem)}
+                      />
+                    ))}
+                    {filtered.length === 0 && (
+                      <div className="col-span-3 flex items-center justify-center h-40 text-muted-foreground">
+                        <div className="text-center">
+                          <div className="text-2xl mb-2">📁</div>
+                          <p>No {tab === 'all' ? 'media' : tab + 's'} found for User ID: {HARDCODED_USER_ID}</p>
+                          <Button 
+                            variant="outline" 
+                            className="mt-2"
+                            onClick={() => setTab('upload')}
+                          >
+                            Upload Files
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </TabsContent>

@@ -1,10 +1,8 @@
-import { Request } from 'express';
 import { Context } from '../../config/context';
 import { Controller } from '../../utils/controller';
 import { UsersPersister } from '../persisters/user-persisters';
 import { DatabaseUsersId, DatabaseUsersInitializer } from '../../types/database/DatabaseUsers';
 import { throwError } from '../../utils/error-handler';
-import assert from '../../utils/assert-extensions';
 
 interface CreateUserData {
   name: string;

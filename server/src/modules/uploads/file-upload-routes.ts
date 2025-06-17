@@ -16,7 +16,8 @@ const addFileUploadRoute = (
   path: string,
   handler: (context: Context, data: any, req: any) => Promise<any>
 ) => {
-  router.post(path, fileUploadConfig, async (req, res, next) => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  router.post(path, fileUploadConfig, async (req, res, next): Promise<void> => {
     try {
       const context = (req as RequestWithContext).context!;
       
