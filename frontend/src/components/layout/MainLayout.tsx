@@ -20,12 +20,6 @@ export function MainLayout() {
           <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <nav className="flex items-center space-x-4">
               <a 
-                href="/upload"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
-              >
-                Upload Photos
-              </a>
-              <a 
                 href="/profile"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground"
               >
