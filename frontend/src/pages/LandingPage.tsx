@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -86,7 +86,7 @@ const AlternativesPanel = ({
                 isCurrent: true
               },
               // Then the rest of the alternatives
-              ...(currentAsset?.alternatives?.filter(alt => 
+              ...(currentAsset?.alternatives?.filter((alt: any) => 
                 alt.answer !== currentAsset.answer || alt.question !== currentAsset.question
               ) || [])
             ].map((alt: any) => (
