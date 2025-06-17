@@ -259,7 +259,7 @@ export function LandingPage() {
     
     if (supabaseUser && serverUser !== undefined) {
       // User is authenticated and we have profile data
-      if (serverUser && serverUser.username) {
+      if (serverUser?.username) {
         navigate(`/profile/${serverUser.username}`);
       } else {
         // User doesn't have username yet, redirect to complete profile
@@ -271,10 +271,6 @@ export function LandingPage() {
     }
   };
 
-  const handleBrowseProfiles = () => {
-    // Temporarily disabled
-    console.log('Browse profiles - coming soon!');
-  };
 
   const handleAssetClick = (type: 'photo' | 'text', index: number) => {
     console.log('Asset clicked:', { type, index });
@@ -294,11 +290,9 @@ export function LandingPage() {
     
     setSelectedProfile(prev => {
       const updatedAssets = [...prev.assets];
-      const assetIndex = updatedAssets.findIndex(
-        (asset, idx) => asset.type === editingAsset.type && idx === editingAsset.index
-      );
+      const assetIndex = editingAsset.index;
       
-      if (assetIndex !== -1) {
+      if (updatedAssets[assetIndex]) {
         if (editingAsset.type === 'photo') {
           updatedAssets[assetIndex] = { 
             ...updatedAssets[assetIndex], 
@@ -322,7 +316,6 @@ export function LandingPage() {
     handleClosePanel();
   };
 
-  console.log('Rendering LandingPage');
 
   return (
     <div className="bg-gradient-to-b from-gray-50 to-white w-full overflow-hidden">
@@ -355,8 +348,8 @@ export function LandingPage() {
                   <Button 
                     variant="outline" 
                     size="lg" 
-                    onClick={handleBrowseProfiles}
                     disabled
+                    // onClick intentionally omitted while feature is disabled
                   >
                     Browse Profiles
                   </Button>

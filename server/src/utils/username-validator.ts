@@ -3,12 +3,36 @@ import { UsersPersister } from '../modules/persisters/user-persisters';
 import { DatabaseUsersId } from '../types/database/DatabaseUsers';
 import { throwError } from './error-handler';
 
-const NORMALISED_USERNAME = /^[a-zA-Z0-9_-]{3,20}$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,20}$/;
 
 /**
  * Normalizes a username by trimming whitespace and converting to lowercase for case-insensitive operations
  */
-const normaliseUsername = (username?: string | null): string | null => username?.trim() || null;
+const normaliseUsername = (username?: string | null): string | null => 
+  username ? username.trim().toLowerCase() : null;
+
+/**
+ * Validates username format and throws if invalid
+ * @param username - Username to validate
+ * @returns Normalized username
+ * @throws Error if format validation fails
+ */
+const assertValidFormat = (username: string): string => {
+  const normalizedUsername = normaliseUsername(username);
+  
+  if (!normalizedUsername) {
+    throwError('Username cannot be empty');
+  }
+  
+  // TypeScript assertion: normalizedUsername is guaranteed to be string here
+  const validUsername = normalizedUsername as string;
+  
+  if (!USERNAME_PATTERN.test(validUsername)) {
+    throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
+  }
+  
+  return validUsername;
+};
 
 /**
  * Validates username format and checks availability
@@ -23,18 +47,7 @@ const validateAndAssertUsername = async (
   username: string,
   allowOwnedId?: DatabaseUsersId,
 ): Promise<string> => {
-  const normalizedUsername = normaliseUsername(username);
-  
-  if (!normalizedUsername) {
-    throwError('Username cannot be empty');
-  }
-  
-  // TypeScript assertion: normalizedUsername is guaranteed to be string here
-  const validUsername = normalizedUsername as string;
-  
-  if (!NORMALISED_USERNAME.test(validUsername)) {
-    throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-  }
+  const validUsername = assertValidFormat(username);
 
   // Check availability
   const existingUser = await UsersPersister.getUserByUsername(context, validUsername);
@@ -52,20 +65,7 @@ const validateAndAssertUsername = async (
  * @throws Error if format validation fails
  */
 const validateUsernameFormat = (username: string): string => {
-  const normalizedUsername = normaliseUsername(username);
-  
-  if (!normalizedUsername) {
-    throwError('Username cannot be empty');
-  }
-  
-  // TypeScript assertion: normalizedUsername is guaranteed to be string here
-  const validUsername = normalizedUsername as string;
-  
-  if (!NORMALISED_USERNAME.test(validUsername)) {
-    throwError('Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens');
-  }
-  
-  return validUsername;
+  return assertValidFormat(username);
 };
 
 export const UsernameValidator = {
